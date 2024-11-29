@@ -13,6 +13,7 @@
 #include "expression_utils.h"
 #include "expression_simplify.h"
 #include "diff_dump.h"
+#include "string_parser.h"
 
 /*=========================================================================================================*/
 
@@ -41,7 +42,6 @@ static expression_error_t expression_read_node         (expression_t      *expre
 static expression_error_t expression_evaluate_node     (expression_t      *expression,
                                                         expression_node_t *node,
                                                         double            *output);
-static operation_t        get_operation_code           (const char        *operation);
 
 static expression_node_t *differentiate_node           (expression_t      *derivative,
                                                         expression_node_t *node,
@@ -52,9 +52,6 @@ static expression_node_t *operation_derivative         (expression_t      *deriv
                                                         expression_node_t *node,
                                                         size_t             diff_variable,
                                                         latex_log_info_t  *log_info);
-
-static size_t             count_variables              (expression_node_t *node,
-                                                        size_t             diff_variable);
 
 /*=========================================================================================================*/
 
@@ -71,16 +68,16 @@ expression_error_t expression_ctor(expression_t *expression,
 
 expression_error_t expression_read_from_user(expression_t *expression,
                                              const char   *filename) {
-    char *expression_string = NULL;
+    parser_info_t parser_info = {};
     if(filename == NULL) {
-        _RETURN_IF_ERROR(expression_read_from_console(&expression_string));
+        _RETURN_IF_ERROR(expression_read_from_console(&parser_info.input));
     }
     else {
-        _RETURN_IF_ERROR(expression_read_from_file(&expression_string, filename));
+        _RETURN_IF_ERROR(expression_read_from_file(&parser_info.input, filename));
     }
 
-    expression_error_t error_code = expression_create_tree(expression, expression_string);
-    free(expression_string);
+    expression_error_t error_code = read_expression(expression, &parser_info);
+    // free(expression_string);
     return error_code;
 }
 
@@ -272,17 +269,6 @@ expression_error_t expression_evaluate_node(expression_t      *expression,
 
 /*=========================================================================================================*/
 
-operation_t get_operation_code(const char *operation) {
-    for(size_t i = 1; i < sizeof(SupportedOperations) / sizeof(SupportedOperations[0]); i++) {
-        if(strcmp(operation, SupportedOperations[i].name) == 0) {
-            return SupportedOperations[i].code;
-        }
-    }
-    return OPERATION_UNKNOWN;
-}
-
-/*=========================================================================================================*/
-
 expression_error_t expression_differentiate(expression_t *expression,
                                             expression_t *derivative) {
     latex_log_info_t log_info = {};
@@ -370,8 +356,8 @@ expression_node_t *operation_derivative(expression_t      *derivative,
         case OPERATION_MUL: {
             return _ADD(_MUL(_DIFF_LEFT,
                              _COPY_RIGHT),
-                        _MUL(_DIFF_LEFT,
-                             _COPY_RIGHT));
+                        _MUL(_DIFF_RIGHT,
+                             _COPY_LEFT));
         }
         case OPERATION_DIV: {
             return _DIV(_SUB(_MUL(_DIFF_LEFT,
@@ -517,41 +503,3 @@ expression_node_t *operation_derivative(expression_t      *derivative,
 #undef _COPY_RIGHT
 #undef _DIFF_LEFT
 #undef _DIFF_RIGHT
-
-/*=========================================================================================================*/
-
-expression_error_t expression_delete_subtree(expression_t      *expression,
-                                             expression_node_t *node) {
-    if(node == NULL) {
-        return EXPRESSION_SUCCESS;
-    }
-    if(node->left != NULL) {
-        _RETURN_IF_ERROR(expression_delete_subtree(expression, node->left));
-    }
-    if(node->right != NULL) {
-        _RETURN_IF_ERROR(expression_delete_subtree(expression, node->right));
-    }
-    _RETURN_IF_ERROR(nodes_storage_remove(&expression->nodes_storage, node));
-    return EXPRESSION_SUCCESS;
-}
-
-/*=========================================================================================================*/
-
-size_t count_variables(expression_node_t *node, size_t diff_variable) {
-    if(node == NULL) {
-        return 0;
-    }
-    if(node->type == NODE_TYPE_NUM) {
-        return 0;
-    }
-    if(node->type == NODE_TYPE_VAR) {
-        if(node->value.variable_index == diff_variable) {
-            return 1;
-        }
-        else {
-            return 0;
-        }
-    }
-
-    return count_variables(node->left, diff_variable) + count_variables(node->right, diff_variable);
-}

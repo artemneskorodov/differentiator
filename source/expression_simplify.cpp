@@ -11,11 +11,23 @@
 
 /*=========================================================================================================*/
 
-static expression_error_t expression_simplify_evaluate_subtree_operation(expression_t      *expression,
-                                                                         expression_node_t *node,
-                                                                         double            *result,
-                                                                         size_t            *changes_counter,
-                                                                         latex_log_info_t  *log_info);
+static expression_error_t expression_simplify_evaluate_subtree_operation (expression_t       *expression,
+                                                                          expression_node_t  *node,
+                                                                          double             *result,
+                                                                          size_t             *changes_counter,
+                                                                          latex_log_info_t   *log_info);
+
+static expression_error_t expression_simplify_evaluate_subtree           (expression_t       *expression,
+                                                                          expression_node_t  *node,
+                                                                          double             *result,
+                                                                          size_t             *changes_counter,
+                                                                          latex_log_info_t   *log_info);
+
+static expression_error_t expression_simplify_neutrals                   (expression_t       *expression,
+                                                                          expression_node_t  *node,
+                                                                          size_t             *changes_counter,
+                                                                          expression_node_t **result,
+                                                                          latex_log_info_t   *log_info);
 
 /*=========================================================================================================*/
 
@@ -113,8 +125,7 @@ expression_error_t expression_simplify_neutrals(expression_t       *expression,
                                                 size_t             *changes_counter,
                                                 expression_node_t **result,
                                                 latex_log_info_t   *log_info) {
-
-    technical_dump(expression, node, "Trying to simplify neutrals");
+    // technical_dump(expression, node, "Trying to simplify neutrals");
     if(node == NULL) {
         return EXPRESSION_SUCCESS;
     }
@@ -218,6 +229,7 @@ expression_error_t expression_simplify_neutrals_mul(expression_t       *expressi
         node->right = NULL;
         node->type = NODE_TYPE_NUM;
         node->value = {.numeric_value = 0};
+        node->is_substitution = false;
         *result = node;
         _RETURN_IF_ERROR(latex_log_write_after(log_info, node));
         return EXPRESSION_SUCCESS;
@@ -297,6 +309,7 @@ expression_error_t expression_simplify_neutrals_pow(expression_t       *expressi
         node->right = NULL;
         node->type = NODE_TYPE_NUM;
         node->value = {.numeric_value = 1};
+        node->is_substitution = false;
         *result = node;
         _RETURN_IF_ERROR(latex_log_write_after(log_info, node));
         return EXPRESSION_SUCCESS;
@@ -316,6 +329,7 @@ expression_error_t expression_simplify_neutrals_pow(expression_t       *expressi
         node->right = NULL;
         node->type = NODE_TYPE_NUM;
         node->value = {.numeric_value = 1};
+        node->is_substitution = false;
         *result = node;
         _RETURN_IF_ERROR(latex_log_write_after(log_info, node));
         return EXPRESSION_SUCCESS;

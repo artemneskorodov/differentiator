@@ -15,6 +15,6 @@ int main(void) {
     printf("diff      | %d\n", expression_differentiate(&expression, &derivative));
 
     printf("dtor expr | %d\n", expression_dtor(&expression));
-    printf("dtor diff | %d\n", expression_dtor(&expression));
+    printf("dtor diff | %d\n", expression_dtor(&derivative));
     return EXIT_SUCCESS;
 }

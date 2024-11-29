@@ -78,6 +78,11 @@ struct variable_t {
     double               value;
 };
 
+struct parser_info_t {
+    char *input;
+    size_t position;
+};
+
 struct variables_list_t {
     variable_t           variables[MaxVarsNumber];
     size_t               size;

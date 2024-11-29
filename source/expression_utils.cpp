@@ -7,10 +7,11 @@
 #include "expression_utils.h"
 #include "utils.h"
 #include "colors.h"
+#include "matan_killer.h"
 
 /*=========================================================================================================*/
 
-static const size_t NodesStorageContainerCapacity = 3;
+static const size_t NodesStorageContainerCapacity = 64;
 static const size_t InitNodesContainersNumber     = 64;
 
 /*=========================================================================================================*/
@@ -271,4 +272,53 @@ expression_error_t nodes_storage_new_container(nodes_storage_t *storage) {
     storage->containers[storage->capacity / storage->container_capacity] = new_container;
     storage->capacity += storage->container_capacity;
     return EXPRESSION_SUCCESS;
+}
+
+/*=========================================================================================================*/
+
+operation_t get_operation_code(const char *operation) {
+    for(size_t i = 1; i < sizeof(SupportedOperations) / sizeof(SupportedOperations[0]); i++) {
+        if(strcmp(operation, SupportedOperations[i].name) == 0) {
+            return SupportedOperations[i].code;
+        }
+    }
+    return OPERATION_UNKNOWN;
+}
+
+/*=========================================================================================================*/
+
+expression_error_t expression_delete_subtree(expression_t      *expression,
+                                             expression_node_t *node) {
+    if(node == NULL) {
+        return EXPRESSION_SUCCESS;
+    }
+    if(node->left != NULL) {
+        _RETURN_IF_ERROR(expression_delete_subtree(expression, node->left));
+    }
+    if(node->right != NULL) {
+        _RETURN_IF_ERROR(expression_delete_subtree(expression, node->right));
+    }
+    _RETURN_IF_ERROR(nodes_storage_remove(&expression->nodes_storage, node));
+    return EXPRESSION_SUCCESS;
+}
+
+/*=========================================================================================================*/
+
+size_t count_variables(expression_node_t *node, size_t diff_variable) {
+    if(node == NULL) {
+        return 0;
+    }
+    if(node->type == NODE_TYPE_NUM) {
+        return 0;
+    }
+    if(node->type == NODE_TYPE_VAR) {
+        if(node->value.variable_index == diff_variable) {
+            return 1;
+        }
+        else {
+            return 0;
+        }
+    }
+
+    return count_variables(node->left, diff_variable) + count_variables(node->right, diff_variable);
 }
