@@ -7,15 +7,40 @@
 #include "variable_list.h"
 #include "expression_utils.h"
 
-static expression_error_t expression_get_expr(expression_t *expression, expression_node_t **output, parser_info_t *parser_info);
-static expression_error_t expression_get_mul(expression_t *expression, expression_node_t **output, parser_info_t *parser_info);
-static expression_error_t expression_get_pow(expression_t *expression, expression_node_t **output, parser_info_t *parser_info);
-static expression_error_t expression_getP(expression_t *expression, expression_node_t **output, parser_info_t *parser_info);
-static expression_error_t expression_get_num(expression_t *expression, expression_node_t **output, parser_info_t *parser_info);
-static expression_error_t expression_get_var(expression_t *expression, expression_node_t **output, parser_info_t *parser_info);
-static expression_error_t expression_get_func(expression_t *expression, expression_node_t **output, parser_info_t *parser_info);
+/*=========================================================================================================*/
 
-expression_error_t read_expression(expression_t *expression, parser_info_t *parser_info) {
+static expression_error_t expression_get_expr (expression_t       *expression,
+                                               expression_node_t **output,
+                                               parser_info_t      *parser_info);
+
+static expression_error_t expression_get_mul  (expression_t       *expression,
+                                               expression_node_t **output,
+                                               parser_info_t      *parser_info);
+
+static expression_error_t expression_get_pow  (expression_t       *expression,
+                                               expression_node_t **output,
+                                               parser_info_t      *parser_info);
+
+static expression_error_t expression_getP     (expression_t       *expression,
+                                               expression_node_t **output,
+                                               parser_info_t      *parser_info);
+
+static expression_error_t expression_get_num  (expression_t       *expression,
+                                               expression_node_t **output,
+                                               parser_info_t      *parser_info);
+
+static expression_error_t expression_get_var  (expression_t       *expression,
+                                               expression_node_t **output,
+                                               parser_info_t      *parser_info);
+
+static expression_error_t expression_get_func (expression_t       *expression,
+                                               expression_node_t **output,
+                                               parser_info_t      *parser_info);
+
+/*=========================================================================================================*/
+
+expression_error_t read_expression(expression_t  *expression,
+                                   parser_info_t *parser_info) {
     expression_node_t *root = NULL;
     _RETURN_IF_ERROR(expression_get_expr(expression, &root, parser_info));
     if(parser_info->input[parser_info->position] != '\0') {
@@ -26,9 +51,12 @@ expression_error_t read_expression(expression_t *expression, parser_info_t *pars
     return EXPRESSION_SUCCESS;
 }
 
-expression_error_t expression_get_expr(expression_t *expression, expression_node_t **output, parser_info_t *parser_info) {
+/*=========================================================================================================*/
+
+expression_error_t expression_get_expr(expression_t       *expression,
+                                       expression_node_t **output,
+                                       parser_info_t      *parser_info) {
     expression_node_t *res = NULL;
-    fprintf(stderr, "1\n");
     _RETURN_IF_ERROR(expression_get_mul(expression, &res, parser_info));
     while(parser_info->input[parser_info->position] == '+' ||
           parser_info->input[parser_info->position] == '-') {
@@ -53,7 +81,11 @@ expression_error_t expression_get_expr(expression_t *expression, expression_node
     return EXPRESSION_SUCCESS;
 }
 
-expression_error_t expression_get_mul(expression_t *expression, expression_node_t **output, parser_info_t *parser_info) {
+/*=========================================================================================================*/
+
+expression_error_t expression_get_mul(expression_t       *expression,
+                                      expression_node_t **output,
+                                      parser_info_t      *parser_info) {
     expression_node_t *res = NULL;
     _RETURN_IF_ERROR(expression_get_pow(expression, &res, parser_info));
     while(parser_info->input[parser_info->position] == '*' ||
@@ -78,7 +110,11 @@ expression_error_t expression_get_mul(expression_t *expression, expression_node_
     return EXPRESSION_SUCCESS;
 }
 
-expression_error_t expression_get_pow(expression_t *expression, expression_node_t **output, parser_info_t *parser_info) {
+/*=========================================================================================================*/
+
+expression_error_t expression_get_pow(expression_t       *expression,
+                                      expression_node_t **output,
+                                      parser_info_t      *parser_info) {
     expression_node_t *res = NULL;
     _RETURN_IF_ERROR(expression_getP(expression, &res, parser_info));
     while(parser_info->input[parser_info->position] == '^') {
@@ -95,8 +131,11 @@ expression_error_t expression_get_pow(expression_t *expression, expression_node_
     return EXPRESSION_SUCCESS;
 }
 
+/*=========================================================================================================*/
 
-expression_error_t expression_getP(expression_t *expression, expression_node_t **output, parser_info_t *parser_info) {
+expression_error_t expression_getP(expression_t       *expression,
+                                   expression_node_t **output,
+                                   parser_info_t      *parser_info) {
     if(parser_info->input[parser_info->position] == '(') {
         parser_info->position++;
         _RETURN_IF_ERROR(expression_get_expr(expression, output, parser_info));
@@ -123,7 +162,11 @@ expression_error_t expression_getP(expression_t *expression, expression_node_t *
     return EXPRESSION_READING_ERROR;
 }
 
-expression_error_t expression_get_num(expression_t *expression, expression_node_t **output, parser_info_t *parser_info) {
+/*=========================================================================================================*/
+
+expression_error_t expression_get_num(expression_t       *expression,
+                                      expression_node_t **output,
+                                      parser_info_t      *parser_info) {
     (*output)->type = NODE_TYPE_NUM;
 
     double multiplier = 1;
@@ -152,26 +195,36 @@ expression_error_t expression_get_num(expression_t *expression, expression_node_
     return EXPRESSION_SUCCESS;
 }
 
-expression_error_t expression_get_var(expression_t *expression, expression_node_t **output, parser_info_t *parser_info) {
+/*=========================================================================================================*/
+
+expression_error_t expression_get_var(expression_t       *expression,
+                                      expression_node_t **output,
+                                      parser_info_t      *parser_info) {
     (*output)->type = NODE_TYPE_VAR;
     size_t *output_index = &(*output)->value.variable_index;
     if(parser_info->input[parser_info->position] == '-') {
         parser_info->position++;
         (*output)->type = NODE_TYPE_OP;
         (*output)->value.operation = OPERATION_MUL;
+
         _RETURN_IF_ERROR(nodes_storage_new_node(&expression->nodes_storage, &(*output)->left));
         (*output)->left->type = NODE_TYPE_NUM;
         (*output)->left->value.numeric_value = -1;
+
         _RETURN_IF_ERROR(nodes_storage_new_node(&expression->nodes_storage, &(*output)->right));
         (*output)->right->type = NODE_TYPE_VAR;
         output_index = &(*output)->right->value.variable_index;
     }
     char varname = parser_info->input[parser_info->position++];
-    _RETURN_IF_ERROR(variables_list_add(&expression->variables_list, varname, output_index));
+    _RETURN_IF_ERROR(variables_list_add(expression->variables_list, varname, output_index));
     return EXPRESSION_SUCCESS;
 }
 
-expression_error_t expression_get_func(expression_t *expression, expression_node_t **output, parser_info_t *parser_info) {
+/*=========================================================================================================*/
+
+expression_error_t expression_get_func(expression_t       *expression,
+                                       expression_node_t **output,
+                                       parser_info_t      *parser_info) {
     (*output)->type = NODE_TYPE_OP;
     char function[256] = {};
     size_t function_index = 0;

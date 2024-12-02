@@ -117,7 +117,7 @@ struct nodes_storage_t {
 
 struct expression_t {
     expression_node_t   *root;
-    variables_list_t     variables_list;
+    variables_list_t    *variables_list;
     nodes_storage_t      nodes_storage;
     expression_dump_t    dump_info;
 };

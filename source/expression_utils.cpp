@@ -322,3 +322,17 @@ size_t count_variables(expression_node_t *node, size_t diff_variable) {
 
     return count_variables(node->left, diff_variable) + count_variables(node->right, diff_variable);
 }
+
+/*=========================================================================================================*/
+
+expression_error_t set_node_to_const(expression_t *expression, expression_node_t *node, double value) {
+    _RETURN_IF_ERROR(expression_delete_subtree(expression, node->left));
+    _RETURN_IF_ERROR(expression_delete_subtree(expression, node->right));
+    node->left = NULL;
+    node->right = NULL;
+    node->is_substitution = false;
+    node->type = NODE_TYPE_NUM;
+    node->value.numeric_value = value;
+
+    return EXPRESSION_SUCCESS;
+}

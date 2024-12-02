@@ -257,7 +257,7 @@ const char *string_node_value(expression_t      *expression,
             break;
         }
         case NODE_TYPE_VAR: {
-            char varname = variables_list_get_varname(&expression->variables_list, node->value.variable_index);
+            char varname = variables_list_get_varname(expression->variables_list, node->value.variable_index);
             sprintf(value_string, "%c", varname);
             break;
         }
@@ -303,7 +303,7 @@ expression_error_t latex_log_ctor(latex_log_info_t *log_info,
     char latex_filename[256] = {};
     srand((unsigned)time(NULL));
 
-    log_info->variables_list = &expression->variables_list;
+    log_info->variables_list = expression->variables_list;
     sprintf(latex_filename, "logs/%s.tex", filename);
     log_info->file = fopen(latex_filename, "w");
     if(log_info->file == NULL) {

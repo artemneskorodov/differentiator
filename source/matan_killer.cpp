@@ -26,19 +26,6 @@ static expression_error_t expression_read_from_file    (char             **expre
 
 static expression_error_t expression_read_from_console (char             **expression_string);
 
-static expression_error_t expression_read_node_value   (expression_t      *expression,
-                                                        expression_node_t *node,
-                                                        const char        *string,
-                                                        size_t            *index);
-
-static expression_error_t expression_create_tree       (expression_t      *expression,
-                                                        const char        *expression_string);
-
-static expression_error_t expression_read_node         (expression_t      *expression,
-                                                        expression_node_t *node,
-                                                        const char        *string,
-                                                        size_t            *index);
-
 static expression_error_t expression_evaluate_node     (expression_t      *expression,
                                                         expression_node_t *node,
                                                         double            *output);
@@ -55,9 +42,10 @@ static expression_node_t *operation_derivative         (expression_t      *deriv
 
 /*=========================================================================================================*/
 
-expression_error_t expression_ctor(expression_t *expression,
-                                   const char   *technical_filename) {
-    _RETURN_IF_ERROR(variables_list_ctor(&expression->variables_list));
+expression_error_t expression_ctor(expression_t     *expression,
+                                   const char       *technical_filename,
+                                   variables_list_t *variables_list) {
+    expression->variables_list = variables_list;
     _RETURN_IF_ERROR(nodes_storage_ctor(&expression->nodes_storage));
 
     _RETURN_IF_ERROR(technical_dump_ctor(expression, technical_filename));
@@ -126,10 +114,10 @@ expression_error_t expression_evaluate(expression_t *expression,
                                        const char   *filename,
                                        double       *result) {
     if(filename == NULL) {
-        _RETURN_IF_ERROR(variables_list_set_from_console(&expression->variables_list));
+        _RETURN_IF_ERROR(variables_list_set_from_console(expression->variables_list));
     }
     else {
-        _RETURN_IF_ERROR(variables_list_set_from_file(&expression->variables_list, filename));
+        _RETURN_IF_ERROR(variables_list_set_from_file(expression->variables_list, filename));
     }
     _RETURN_IF_ERROR(expression_evaluate_node(expression, expression->root, result));
     return EXPRESSION_SUCCESS;
@@ -138,103 +126,13 @@ expression_error_t expression_evaluate(expression_t *expression,
 /*=========================================================================================================*/
 
 expression_error_t expression_dtor(expression_t *expression) {
-    _RETURN_IF_ERROR(variables_list_dtor(&expression->variables_list));
+    _RETURN_IF_ERROR(variables_list_dtor(expression->variables_list));
     _RETURN_IF_ERROR(nodes_storage_dtor(&expression->nodes_storage));
     _RETURN_IF_ERROR(technical_dump_dtor(expression));
     if(memset(expression, 0, sizeof(*expression)) != expression) {
         return EXPRESSION_SETTING_TO_ZERO_ERROR;
     }
 
-    return EXPRESSION_SUCCESS;
-}
-
-/*=========================================================================================================*/
-
-expression_error_t expression_create_tree(expression_t *expression,
-                                          const char   *expression_string) {
-    size_t string_index = 0;
-    _RETURN_IF_ERROR(nodes_storage_new_node(&expression->nodes_storage, &expression->root));
-
-    _RETURN_IF_ERROR(expression_read_node(expression, expression->root, expression_string, &string_index));
-
-    return EXPRESSION_SUCCESS;
-}
-
-/*=========================================================================================================*/
-
-expression_error_t expression_read_node(expression_t      *expression,
-                                        expression_node_t *node,
-                                        const char        *string,
-                                        size_t            *index) {
-    _RETURN_IF_ERROR(expression_clean_buffer(string, index));
-    if(string[(*index)] == '\0') {
-        return EXPRESSION_SUCCESS;
-    }
-    if(string[(*index)++] != '(') {
-        print_error("Unexpected character '%c' in expression on index %llu.\n", string[*index], *index - 1);
-        return EXPRESSION_READING_ERROR;
-    }
-
-    _RETURN_IF_ERROR(expression_clean_buffer(string, index));
-
-    if(string[(*index)] == '(') {
-        _RETURN_IF_ERROR(nodes_storage_new_node(&expression->nodes_storage, &node->left));
-        _RETURN_IF_ERROR(expression_read_node(expression, node->left, string, index));
-        _RETURN_IF_ERROR(expression_clean_buffer(string, index));
-    }
-
-    _RETURN_IF_ERROR(expression_read_node_value(expression, node, string, index));
-
-    if(string[(*index)] == '(') {
-        _RETURN_IF_ERROR(nodes_storage_new_node(&expression->nodes_storage, &node->right));
-        _RETURN_IF_ERROR(expression_read_node(expression, node->right, string, index));
-        _RETURN_IF_ERROR(expression_clean_buffer(string, index));
-    }
-
-    if(string[(*index)++] != ')') {
-        print_error("Unexpected character '%c' in expression on index %llu.\n", string[*index], *index - 1);
-        return EXPRESSION_READING_ERROR;
-    }
-    _RETURN_IF_ERROR(expression_clean_buffer(string, index));
-
-    return EXPRESSION_SUCCESS;
-}
-
-/*=========================================================================================================*/
-
-expression_error_t expression_read_node_value(expression_t      *expression,
-                                              expression_node_t *node,
-                                              const char        *string,
-                                              size_t            *index) {
-    int read_symbols = 0;
-    if(sscanf(string + (*index), "%lg%n", &node->value.numeric_value, &read_symbols) == 1) {
-        *index += read_symbols;
-        node->type = NODE_TYPE_NUM;
-    }
-
-    else if(isalpha(string[(*index)]) && !isalpha(string[(*index) + 1])){
-        _RETURN_IF_ERROR(variables_list_add(&expression->variables_list, string[(*index)], &node->value.variable_index));
-        node->type = NODE_TYPE_VAR;
-        (*index)++;
-    }
-
-    else {
-        char function[MaxFunctionNameLength + 1] = {};
-        if(sscanf(string + (*index), "%[^\n (]%n", function, &read_symbols) != 1) {
-            print_error("Unexpected expression on index %llu.\n", *index);
-            return EXPRESSION_READING_ERROR;
-        }
-        node->type = NODE_TYPE_OP;
-        operation_t operation = get_operation_code(function);
-        if(operation == OPERATION_UNKNOWN) {
-            print_error("Unknown operation on index %llu.\n", *index);
-            return EXPRESSION_READING_ERROR;
-        }
-        node->value.operation = operation;
-        *index += read_symbols;
-    }
-    _RETURN_IF_ERROR(expression_clean_buffer(string, index));
-    technical_dump(expression, node, "");
     return EXPRESSION_SUCCESS;
 }
 
@@ -248,7 +146,7 @@ expression_error_t expression_evaluate_node(expression_t      *expression,
         return EXPRESSION_SUCCESS;
     }
     if(node->type == NODE_TYPE_VAR) {
-        _RETURN_IF_ERROR(variables_list_get_value(&expression->variables_list, node->value.variable_index, output));
+        _RETURN_IF_ERROR(variables_list_get_value(expression->variables_list, node->value.variable_index, output));
         return EXPRESSION_SUCCESS;
     }
     if(node->type == NODE_TYPE_OP) {

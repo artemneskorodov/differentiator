@@ -31,19 +31,20 @@ static const operation_prototype_t SupportedOperations[] = {
     {"cth",    OPERATION_CTH   , "\\cth"   , NULL                            , latex_write_preorder_one_arg       },
 };
 
-expression_error_t expression_ctor           (expression_t *expression,
-                                              const char   *technical_filename);
+expression_error_t expression_ctor           (expression_t     *expression,
+                                              const char       *technical_filename,
+                                              variables_list_t *variables_list);
 
-expression_error_t expression_evaluate       (expression_t *expression,
-                                              const char   *filename,
-                                              double       *result);
+expression_error_t expression_evaluate       (expression_t     *expression,
+                                              const char       *filename,
+                                              double           *result);
 
-expression_error_t expression_differentiate  (expression_t *expression,
-                                              expression_t *derivative);
+expression_error_t expression_differentiate  (expression_t     *expression,
+                                              expression_t     *derivative);
 
-expression_error_t expression_dtor           (expression_t *expression);
+expression_error_t expression_dtor           (expression_t     *expression);
 
-expression_error_t expression_read_from_user (expression_t *expression,
-                                              const char   *filename);
+expression_error_t expression_read_from_user (expression_t     *expression,
+                                              const char       *filename);
 
 #endif

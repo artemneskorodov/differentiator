@@ -28,6 +28,10 @@ expression_node_t *new_node                  (expression_t       *expression,
                                               expression_node_t  *left,
                                               expression_node_t  *right);
 
+expression_error_t set_node_to_const         (expression_t       *expression,
+                                              expression_node_t  *node,
+                                              double              value);
+
 operation_t        get_operation_code        (const char         *operation);
 
 double             run_operation             (double              left,

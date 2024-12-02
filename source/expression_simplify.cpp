@@ -223,13 +223,7 @@ expression_error_t expression_simplify_neutrals_mul(expression_t       *expressi
                                                     latex_log_info_t   *log_info) {
     if(is_node_equal(node->left, 0) || is_node_equal(node->right, 0)) {
         _RETURN_IF_ERROR(latex_log_write_before(log_info, node, SIMPLIFICATION_NEUTRALS));
-        _RETURN_IF_ERROR(expression_delete_subtree(expression, node->left));
-        _RETURN_IF_ERROR(expression_delete_subtree(expression, node->right));
-        node->left = NULL;
-        node->right = NULL;
-        node->type = NODE_TYPE_NUM;
-        node->value = {.numeric_value = 0};
-        node->is_substitution = false;
+        _RETURN_IF_ERROR(set_node_to_const(expression, node, 0));
         *result = node;
         _RETURN_IF_ERROR(latex_log_write_after(log_info, node));
         return EXPRESSION_SUCCESS;
@@ -267,13 +261,7 @@ expression_error_t expression_simplify_neutrals_div(expression_t       *expressi
     }
     if(is_node_equal(node->left, 0)) {
         _RETURN_IF_ERROR(latex_log_write_before(log_info, node, SIMPLIFICATION_NEUTRALS));
-        _RETURN_IF_ERROR(expression_delete_subtree(expression, node->left));
-        _RETURN_IF_ERROR(expression_delete_subtree(expression, node->right));
-        node->left = NULL;
-        node->right = NULL;
-        node->type = NODE_TYPE_NUM;
-        node->value = {.numeric_value = 0};
-        node->is_substitution = false;
+        _RETURN_IF_ERROR(set_node_to_const(expression, node, 0));
         *result = node;
         _RETURN_IF_ERROR(latex_log_write_after(log_info, node));
         return EXPRESSION_SUCCESS;
@@ -290,26 +278,14 @@ expression_error_t expression_simplify_neutrals_pow(expression_t       *expressi
                                                     latex_log_info_t   *log_info) {
     if(is_node_equal(node->left, 0)) {
         _RETURN_IF_ERROR(latex_log_write_before(log_info, node, SIMPLIFICATION_NEUTRALS));
-        _RETURN_IF_ERROR(expression_delete_subtree(expression, node->left));
-        _RETURN_IF_ERROR(expression_delete_subtree(expression, node->right));
-        node->left = NULL;
-        node->right = NULL;
-        node->type = NODE_TYPE_NUM;
-        node->value = {.numeric_value = 0};
-        node->is_substitution = false;
+        _RETURN_IF_ERROR(set_node_to_const(expression, node, 0));
         *result = node;
         _RETURN_IF_ERROR(latex_log_write_after(log_info, node));
         return EXPRESSION_SUCCESS;
     }
     if(is_node_equal(node->left, 1)) {
         _RETURN_IF_ERROR(latex_log_write_before(log_info, node, SIMPLIFICATION_NEUTRALS));
-        _RETURN_IF_ERROR(expression_delete_subtree(expression, node->left));
-        _RETURN_IF_ERROR(expression_delete_subtree(expression, node->right));
-        node->left = NULL;
-        node->right = NULL;
-        node->type = NODE_TYPE_NUM;
-        node->value = {.numeric_value = 1};
-        node->is_substitution = false;
+        _RETURN_IF_ERROR(set_node_to_const(expression, node, 1));
         *result = node;
         _RETURN_IF_ERROR(latex_log_write_after(log_info, node));
         return EXPRESSION_SUCCESS;
@@ -323,13 +299,7 @@ expression_error_t expression_simplify_neutrals_pow(expression_t       *expressi
     }
     if(is_node_equal(node->right, 0)) {
         _RETURN_IF_ERROR(latex_log_write_before(log_info, node, SIMPLIFICATION_NEUTRALS));
-        _RETURN_IF_ERROR(expression_delete_subtree(expression, node->left));
-        _RETURN_IF_ERROR(expression_delete_subtree(expression, node->right));
-        node->left = NULL;
-        node->right = NULL;
-        node->type = NODE_TYPE_NUM;
-        node->value = {.numeric_value = 1};
-        node->is_substitution = false;
+        _RETURN_IF_ERROR(set_node_to_const(expression, node, 1));
         *result = node;
         _RETURN_IF_ERROR(latex_log_write_after(log_info, node));
         return EXPRESSION_SUCCESS;
@@ -346,12 +316,7 @@ expression_error_t expression_simplify_neutrals_log(expression_t       *expressi
                                                     latex_log_info_t   *log_info) {
     if(is_node_equal(node->right, 1)) {
         _RETURN_IF_ERROR(latex_log_write_before(log_info, node, SIMPLIFICATION_NEUTRALS));
-        _RETURN_IF_ERROR(expression_delete_subtree(expression, node->left));
-        _RETURN_IF_ERROR(expression_delete_subtree(expression, node->right));
-        node->left = NULL;
-        node->right = NULL;
-        node->type = NODE_TYPE_NUM;
-        node->value = {.numeric_value = 0};
+        _RETURN_IF_ERROR(set_node_to_const(expression, node, 0));
         *result = node;
         _RETURN_IF_ERROR(latex_log_write_after(log_info, node));
         return EXPRESSION_SUCCESS;
