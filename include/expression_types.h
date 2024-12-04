@@ -27,7 +27,16 @@ enum expression_error_t {
     EXPRESSION_UNKNOWN_OPERATION                 = 16,
     EXPRESSION_UNKNOWN_ACTION                    = 17,
     EXPRESSION_LATEX_OPENING_ERROR               = 18,
-    //TODO
+    EXPRESSION_NULL_POINTER                      = 19,
+    EXPRESSION_NODE_NULL_POINTER                 = 20,
+    EXPRESSION_LOG_INFO_NULL_POINTER             = 21,
+    EXPRESSION_RESULT_NULL_POINTER               = 22,
+    EXPRESSION_INVALID_FILENAME                  = 23,
+    EXPRESSION_INVALID_DUMP_FORMAT               = 24,
+    EXPRESSION_WRITING_FILE_ERROR                = 25,
+    EXPRESSION_NODES_STORAGE_NULL                = 26,
+    EXPRESSION_VARIABLES_LIST_NULL               = 27,
+    EXPRESSION_INVALID_DUMP_FILENAME             = 28,
 };
 
 #define _RETURN_IF_ERROR(...) {/*function call*/    \
@@ -143,6 +152,10 @@ struct operation_prototype_t {
                                               latex_log_info_t *);
     expression_error_t (*latex_logger)       (latex_log_info_t *,
                                               expression_node_t *);
+    expression_node_t *(*diff_func)          (expression_t *,
+                                              expression_node_t *,
+                                              latex_log_info_t *,
+                                              size_t);
 };
 
 #endif

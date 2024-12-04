@@ -8,6 +8,7 @@
 #include "utils.h"
 #include "colors.h"
 #include "matan_killer.h"
+#include "custom_assert.h"
 
 /*=========================================================================================================*/
 
@@ -22,6 +23,8 @@ static expression_error_t nodes_storage_new_container       (nodes_storage_t *st
 /*=========================================================================================================*/
 
 bool is_node_equal(expression_node_t *node, double value) {
+    _C_ASSERT(node != NULL, return false);
+
     if(node->type != NODE_TYPE_NUM) {
         return false;
     }
@@ -30,16 +33,10 @@ bool is_node_equal(expression_node_t *node, double value) {
 
 /*=========================================================================================================*/
 
-expression_error_t expression_clean_buffer(const char *expression, size_t *index) {
-    while(!isgraph(expression[*index]) && expression[*index] != '\0') {
-        (*index)++;
-    }
-    return EXPRESSION_SUCCESS;
-}
-
-/*=========================================================================================================*/
-
 expression_error_t nodes_storage_remove(nodes_storage_t *storage, expression_node_t *node) {
+    _C_ASSERT(storage != NULL, return EXPRESSION_NODES_STORAGE_NULL);
+    _C_ASSERT(node    != NULL, return EXPRESSION_NODE_NULL_POINTER );
+
     node->left                              = NULL;
     node->right                             = storage->free_head;
     storage->free_head                      = node;
@@ -53,6 +50,8 @@ expression_error_t nodes_storage_remove(nodes_storage_t *storage, expression_nod
 /*=========================================================================================================*/
 
 expression_error_t nodes_check_containers_array_size(nodes_storage_t *storage) {
+    _C_ASSERT(storage != NULL, return EXPRESSION_NODES_STORAGE_NULL);
+
     if(storage->containers_number > storage->size / storage->container_capacity) {
         return EXPRESSION_SUCCESS;
     }
@@ -78,6 +77,8 @@ expression_error_t nodes_check_containers_array_size(nodes_storage_t *storage) {
 /*=========================================================================================================*/
 
 expression_error_t nodes_storage_ctor(nodes_storage_t *storage) {
+    _C_ASSERT(storage != NULL, return EXPRESSION_NODES_STORAGE_NULL);
+
     storage->containers_number  = InitNodesContainersNumber;
     storage->capacity           = 0;
     storage->container_capacity = NodesStorageContainerCapacity;
@@ -95,6 +96,9 @@ expression_error_t nodes_storage_ctor(nodes_storage_t *storage) {
 /*=========================================================================================================*/
 
 expression_error_t nodes_storage_new_node(nodes_storage_t *storage, expression_node_t **output) {
+    _C_ASSERT(storage != NULL, return EXPRESSION_NODES_STORAGE_NULL );
+    _C_ASSERT(output  != NULL, return EXPRESSION_RESULT_NULL_POINTER);
+
     if(storage->size == storage->capacity) {
         _RETURN_IF_ERROR(nodes_storage_new_container(storage));
     }
@@ -112,6 +116,8 @@ expression_error_t nodes_storage_new_node(nodes_storage_t *storage, expression_n
 /*=========================================================================================================*/
 
 expression_error_t nodes_storage_dtor(nodes_storage_t *storage) {
+    _C_ASSERT(storage != NULL, return EXPRESSION_NODES_STORAGE_NULL);
+
     for(size_t container = 0; container < storage->containers_number; container++) {
         free(storage->containers[container]);
     }
@@ -196,6 +202,8 @@ expression_node_t *new_node(expression_t      *expression,
                             node_value_t       value,
                             expression_node_t *left,
                             expression_node_t *right) {
+    _C_ASSERT(expression != NULL, return NULL);
+
     expression_node_t *node = NULL;
     if(nodes_storage_new_node(&expression->nodes_storage, &node) != EXPRESSION_SUCCESS) {
         return NULL;
@@ -224,6 +232,8 @@ expression_node_t *copy_node(expression_t *derivative, expression_node_t *node) 
 /*=========================================================================================================*/
 
 bool is_leaf(expression_node_t *node) {
+    _C_ASSERT(node != NULL, return false);
+
     if((node->left == NULL && node->right == NULL) || node->is_substitution) {
         return true;
     }
@@ -252,6 +262,8 @@ size_t find_tree_size(expression_node_t *node) {
 /*=========================================================================================================*/
 
 expression_error_t nodes_storage_new_container(nodes_storage_t *storage) {
+    _C_ASSERT(storage != NULL, return EXPRESSION_NODES_STORAGE_NULL);
+
     _RETURN_IF_ERROR(nodes_check_containers_array_size(storage));
     expression_node_t *new_container = (expression_node_t *)calloc(storage->container_capacity,
                                                                        sizeof(storage->containers[0][0]));
@@ -277,6 +289,8 @@ expression_error_t nodes_storage_new_container(nodes_storage_t *storage) {
 /*=========================================================================================================*/
 
 operation_t get_operation_code(const char *operation) {
+    _C_ASSERT(operation != NULL, return OPERATION_UNKNOWN);
+
     for(size_t i = 1; i < sizeof(SupportedOperations) / sizeof(SupportedOperations[0]); i++) {
         if(strcmp(operation, SupportedOperations[i].name) == 0) {
             return SupportedOperations[i].code;
@@ -289,6 +303,8 @@ operation_t get_operation_code(const char *operation) {
 
 expression_error_t expression_delete_subtree(expression_t      *expression,
                                              expression_node_t *node) {
+    _C_ASSERT(expression != NULL, return EXPRESSION_NULL_POINTER);
+
     if(node == NULL) {
         return EXPRESSION_SUCCESS;
     }
@@ -326,6 +342,9 @@ size_t count_variables(expression_node_t *node, size_t diff_variable) {
 /*=========================================================================================================*/
 
 expression_error_t set_node_to_const(expression_t *expression, expression_node_t *node, double value) {
+    _C_ASSERT(expression != NULL, return EXPRESSION_NULL_POINTER     );
+    _C_ASSERT(node       != NULL, return EXPRESSION_NODE_NULL_POINTER);
+
     _RETURN_IF_ERROR(expression_delete_subtree(expression, node->left));
     _RETURN_IF_ERROR(expression_delete_subtree(expression, node->right));
     node->left = NULL;

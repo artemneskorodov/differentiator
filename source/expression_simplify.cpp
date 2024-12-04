@@ -11,31 +11,36 @@
 
 /*=========================================================================================================*/
 
-static expression_error_t expression_simplify_evaluate_subtree_operation (expression_t       *expression,
-                                                                          expression_node_t  *node,
-                                                                          double             *result,
-                                                                          size_t             *changes_counter,
-                                                                          latex_log_info_t   *log_info);
+static expression_error_t evaluate_subtree_operation (expression_t       *expression,
+                                                      expression_node_t  *node,
+                                                      double             *result,
+                                                      size_t             *changes_counter,
+                                                      latex_log_info_t   *log_info);
 
-static expression_error_t expression_simplify_evaluate_subtree           (expression_t       *expression,
-                                                                          expression_node_t  *node,
-                                                                          double             *result,
-                                                                          size_t             *changes_counter,
-                                                                          latex_log_info_t   *log_info);
+static expression_error_t simplify_evaluate_subtree  (expression_t       *expression,
+                                                      expression_node_t  *node,
+                                                      double             *result,
+                                                      size_t             *changes_counter,
+                                                      latex_log_info_t   *log_info);
 
-static expression_error_t expression_simplify_neutrals                   (expression_t       *expression,
-                                                                          expression_node_t  *node,
-                                                                          size_t             *changes_counter,
-                                                                          expression_node_t **result,
-                                                                          latex_log_info_t   *log_info);
+static expression_error_t simplify_neutrals          (expression_t       *expression,
+                                                      expression_node_t  *node,
+                                                      size_t             *changes_counter,
+                                                      expression_node_t **result,
+                                                      latex_log_info_t   *log_info);
 
 /*=========================================================================================================*/
 
-expression_error_t expression_simplify_evaluate_subtree(expression_t      *expression,
-                                                        expression_node_t *node,
-                                                        double            *result,
-                                                        size_t            *changes_counter,
-                                                        latex_log_info_t  *log_info) {
+expression_error_t simplify_evaluate_subtree(expression_t      *expression,
+                                             expression_node_t *node,
+                                             double            *result,
+                                             size_t            *changes_counter,
+                                             latex_log_info_t  *log_info) {
+    _C_ASSERT(expression      != NULL, return EXPRESSION_NULL_POINTER         );
+    _C_ASSERT(result          != NULL, return EXPRESSION_RESULT_NULL_POINTER  );
+    _C_ASSERT(changes_counter != NULL, return EXPRESSION_RESULT_NULL_POINTER  );
+    _C_ASSERT(log_info        != NULL, return EXPRESSION_LOG_INFO_NULL_POINTER);
+
     // technical_dump(expression, node, "Trying to evaluate subtree");
     if(node == NULL) {
         *result = NAN;
@@ -51,11 +56,11 @@ expression_error_t expression_simplify_evaluate_subtree(expression_t      *expre
             return EXPRESSION_SUCCESS;
         }
         case NODE_TYPE_OP: {
-            _RETURN_IF_ERROR(expression_simplify_evaluate_subtree_operation(expression,
-                                                                            node,
-                                                                            result,
-                                                                            changes_counter,
-                                                                            log_info));
+            _RETURN_IF_ERROR(evaluate_subtree_operation(expression,
+                                                        node,
+                                                        result,
+                                                        changes_counter,
+                                                        log_info));
             return EXPRESSION_SUCCESS;
         }
         default: {
@@ -67,23 +72,29 @@ expression_error_t expression_simplify_evaluate_subtree(expression_t      *expre
 
 /*=========================================================================================================*/
 
-expression_error_t expression_simplify_evaluate_subtree_operation(expression_t      *expression,
-                                                                  expression_node_t *node,
-                                                                  double            *result,
-                                                                  size_t            *changes_counter,
-                                                                  latex_log_info_t  *log_info) {
+expression_error_t evaluate_subtree_operation(expression_t      *expression,
+                                              expression_node_t *node,
+                                              double            *result,
+                                              size_t            *changes_counter,
+                                              latex_log_info_t  *log_info) {
+    _C_ASSERT(expression      != NULL, return EXPRESSION_NULL_POINTER         );
+    _C_ASSERT(result          != NULL, return EXPRESSION_RESULT_NULL_POINTER  );
+    _C_ASSERT(changes_counter != NULL, return EXPRESSION_RESULT_NULL_POINTER  );
+    _C_ASSERT(log_info        != NULL, return EXPRESSION_LOG_INFO_NULL_POINTER);
+    _C_ASSERT(node            != NULL, return EXPRESSION_NODE_NULL_POINTER    );
+
     double result_left = NAN;
     double result_right = NAN;
-    _RETURN_IF_ERROR(expression_simplify_evaluate_subtree(expression,
-                                                          node->left,
-                                                          &result_left,
-                                                          changes_counter,
-                                                          log_info));
-    _RETURN_IF_ERROR(expression_simplify_evaluate_subtree(expression,
-                                                          node->right,
-                                                          &result_right,
-                                                          changes_counter,
-                                                          log_info));
+    _RETURN_IF_ERROR(simplify_evaluate_subtree(expression,
+                                               node->left,
+                                               &result_left,
+                                               changes_counter,
+                                               log_info));
+    _RETURN_IF_ERROR(simplify_evaluate_subtree(expression,
+                                               node->right,
+                                               &result_right,
+                                               changes_counter,
+                                               log_info));
 
     if(!isnan(result_left) && !isnan(result_right)) {
         *result = run_operation(result_left, result_right, *(operation_t *)&node->value);
@@ -120,11 +131,16 @@ expression_error_t expression_simplify_evaluate_subtree_operation(expression_t  
 
 /*=========================================================================================================*/
 
-expression_error_t expression_simplify_neutrals(expression_t       *expression,
-                                                expression_node_t  *node,
-                                                size_t             *changes_counter,
-                                                expression_node_t **result,
-                                                latex_log_info_t   *log_info) {
+expression_error_t simplify_neutrals(expression_t       *expression,
+                                     expression_node_t  *node,
+                                     size_t             *changes_counter,
+                                     expression_node_t **result,
+                                     latex_log_info_t   *log_info) {
+    _C_ASSERT(expression      != NULL, return EXPRESSION_NULL_POINTER         );
+    _C_ASSERT(result          != NULL, return EXPRESSION_RESULT_NULL_POINTER  );
+    _C_ASSERT(changes_counter != NULL, return EXPRESSION_RESULT_NULL_POINTER  );
+    _C_ASSERT(log_info        != NULL, return EXPRESSION_LOG_INFO_NULL_POINTER);
+
     // technical_dump(expression, node, "Trying to simplify neutrals");
     if(node == NULL) {
         return EXPRESSION_SUCCESS;
@@ -145,11 +161,11 @@ expression_error_t expression_simplify_neutrals(expression_t       *expression,
 
     if(node->left != NULL) {
         expression_node_t *result_left = NULL;
-        _RETURN_IF_ERROR(expression_simplify_neutrals(expression,
-                                                      node->left,
-                                                      changes_counter,
-                                                      &result_left,
-                                                      log_info));
+        _RETURN_IF_ERROR(simplify_neutrals(expression,
+                                           node->left,
+                                           changes_counter,
+                                           &result_left,
+                                           log_info));
         if(node->left->is_free) {
             node->left = NULL;
         }
@@ -159,11 +175,11 @@ expression_error_t expression_simplify_neutrals(expression_t       *expression,
     }
     if(node->right != NULL) {
         expression_node_t *result_right = NULL;
-        _RETURN_IF_ERROR(expression_simplify_neutrals(expression,
-                                                      node->right,
-                                                      changes_counter,
-                                                      &result_right,
-                                                      log_info));
+        _RETURN_IF_ERROR(simplify_neutrals(expression,
+                                           node->right,
+                                           changes_counter,
+                                           &result_right,
+                                           log_info));
         if(node->right->is_free) {
             node->right = NULL;
         }
@@ -177,10 +193,15 @@ expression_error_t expression_simplify_neutrals(expression_t       *expression,
 
 /*=========================================================================================================*/
 
-expression_error_t expression_simplify_neutrals_add(expression_t       *expression,
-                                                    expression_node_t  *node,
-                                                    expression_node_t **result,
-                                                    latex_log_info_t   *log_info) {
+expression_error_t simplify_neutrals_add(expression_t       *expression,
+                                         expression_node_t  *node,
+                                         expression_node_t **result,
+                                         latex_log_info_t   *log_info) {
+    _C_ASSERT(expression      != NULL, return EXPRESSION_NULL_POINTER         );
+    _C_ASSERT(result          != NULL, return EXPRESSION_RESULT_NULL_POINTER  );
+    _C_ASSERT(log_info        != NULL, return EXPRESSION_LOG_INFO_NULL_POINTER);
+    _C_ASSERT(node            != NULL, return EXPRESSION_NODE_NULL_POINTER    );
+
     if(is_node_equal(node->right, 0)) {
         _RETURN_IF_ERROR(latex_log_write_before(log_info, node, SIMPLIFICATION_NEUTRALS));
         _RETURN_IF_ERROR(expression_delete_subtree(expression, node->right));
@@ -201,10 +222,15 @@ expression_error_t expression_simplify_neutrals_add(expression_t       *expressi
 
 /*=========================================================================================================*/
 
-expression_error_t expression_simplify_neutrals_sub(expression_t       *expression,
-                                                    expression_node_t  *node,
-                                                    expression_node_t **result,
-                                                    latex_log_info_t   *log_info) {
+expression_error_t simplify_neutrals_sub(expression_t       *expression,
+                                         expression_node_t  *node,
+                                         expression_node_t **result,
+                                         latex_log_info_t   *log_info) {
+    _C_ASSERT(expression      != NULL, return EXPRESSION_NULL_POINTER         );
+    _C_ASSERT(result          != NULL, return EXPRESSION_RESULT_NULL_POINTER  );
+    _C_ASSERT(log_info        != NULL, return EXPRESSION_LOG_INFO_NULL_POINTER);
+    _C_ASSERT(node            != NULL, return EXPRESSION_NODE_NULL_POINTER    );
+
     if(is_node_equal(node->right, 0)) {
         _RETURN_IF_ERROR(latex_log_write_before(log_info, node, SIMPLIFICATION_NEUTRALS));
         _RETURN_IF_ERROR(expression_delete_subtree(expression, node->right));
@@ -217,10 +243,15 @@ expression_error_t expression_simplify_neutrals_sub(expression_t       *expressi
 
 /*=========================================================================================================*/
 
-expression_error_t expression_simplify_neutrals_mul(expression_t       *expression,
-                                                    expression_node_t  *node,
-                                                    expression_node_t **result,
-                                                    latex_log_info_t   *log_info) {
+expression_error_t simplify_neutrals_mul(expression_t       *expression,
+                                         expression_node_t  *node,
+                                         expression_node_t **result,
+                                         latex_log_info_t   *log_info) {
+    _C_ASSERT(expression      != NULL, return EXPRESSION_NULL_POINTER         );
+    _C_ASSERT(result          != NULL, return EXPRESSION_RESULT_NULL_POINTER  );
+    _C_ASSERT(log_info        != NULL, return EXPRESSION_LOG_INFO_NULL_POINTER);
+    _C_ASSERT(node            != NULL, return EXPRESSION_NODE_NULL_POINTER    );
+
     if(is_node_equal(node->left, 0) || is_node_equal(node->right, 0)) {
         _RETURN_IF_ERROR(latex_log_write_before(log_info, node, SIMPLIFICATION_NEUTRALS));
         _RETURN_IF_ERROR(set_node_to_const(expression, node, 0));
@@ -248,10 +279,15 @@ expression_error_t expression_simplify_neutrals_mul(expression_t       *expressi
 
 /*=========================================================================================================*/
 
-expression_error_t expression_simplify_neutrals_div(expression_t       *expression,
-                                                    expression_node_t  *node,
-                                                    expression_node_t **result,
-                                                    latex_log_info_t   *log_info) {
+expression_error_t simplify_neutrals_div(expression_t       *expression,
+                                         expression_node_t  *node,
+                                         expression_node_t **result,
+                                         latex_log_info_t   *log_info) {
+    _C_ASSERT(expression      != NULL, return EXPRESSION_NULL_POINTER         );
+    _C_ASSERT(result          != NULL, return EXPRESSION_RESULT_NULL_POINTER  );
+    _C_ASSERT(log_info        != NULL, return EXPRESSION_LOG_INFO_NULL_POINTER);
+    _C_ASSERT(node            != NULL, return EXPRESSION_NODE_NULL_POINTER    );
+
     if(is_node_equal(node->right, 1)) {
         _RETURN_IF_ERROR(latex_log_write_before(log_info, node, SIMPLIFICATION_NEUTRALS));
         _RETURN_IF_ERROR(expression_delete_subtree(expression, node->right));
@@ -272,10 +308,15 @@ expression_error_t expression_simplify_neutrals_div(expression_t       *expressi
 
 /*=========================================================================================================*/
 
-expression_error_t expression_simplify_neutrals_pow(expression_t       *expression,
-                                                    expression_node_t  *node,
-                                                    expression_node_t **result,
-                                                    latex_log_info_t   *log_info) {
+expression_error_t simplify_neutrals_pow(expression_t       *expression,
+                                         expression_node_t  *node,
+                                         expression_node_t **result,
+                                         latex_log_info_t   *log_info) {
+    _C_ASSERT(expression      != NULL, return EXPRESSION_NULL_POINTER         );
+    _C_ASSERT(result          != NULL, return EXPRESSION_RESULT_NULL_POINTER  );
+    _C_ASSERT(log_info        != NULL, return EXPRESSION_LOG_INFO_NULL_POINTER);
+    _C_ASSERT(node            != NULL, return EXPRESSION_NODE_NULL_POINTER    );
+
     if(is_node_equal(node->left, 0)) {
         _RETURN_IF_ERROR(latex_log_write_before(log_info, node, SIMPLIFICATION_NEUTRALS));
         _RETURN_IF_ERROR(set_node_to_const(expression, node, 0));
@@ -310,10 +351,15 @@ expression_error_t expression_simplify_neutrals_pow(expression_t       *expressi
 
 /*=========================================================================================================*/
 
-expression_error_t expression_simplify_neutrals_log(expression_t       *expression,
-                                                    expression_node_t  *node,
-                                                    expression_node_t **result,
-                                                    latex_log_info_t   *log_info) {
+expression_error_t simplify_neutrals_log(expression_t       *expression,
+                                         expression_node_t  *node,
+                                         expression_node_t **result,
+                                         latex_log_info_t   *log_info) {
+    _C_ASSERT(expression      != NULL, return EXPRESSION_NULL_POINTER         );
+    _C_ASSERT(result          != NULL, return EXPRESSION_RESULT_NULL_POINTER  );
+    _C_ASSERT(log_info        != NULL, return EXPRESSION_LOG_INFO_NULL_POINTER);
+    _C_ASSERT(node            != NULL, return EXPRESSION_NODE_NULL_POINTER    );
+
     if(is_node_equal(node->right, 1)) {
         _RETURN_IF_ERROR(latex_log_write_before(log_info, node, SIMPLIFICATION_NEUTRALS));
         _RETURN_IF_ERROR(set_node_to_const(expression, node, 0));
@@ -329,14 +375,17 @@ expression_error_t expression_simplify_neutrals_log(expression_t       *expressi
 
 expression_error_t expression_simplify(expression_t     *expression,
                                        latex_log_info_t *log_info) {
+    _C_ASSERT(expression != NULL, return EXPRESSION_NULL_POINTER         );
+    _C_ASSERT(log_info   != NULL, return EXPRESSION_LOG_INFO_NULL_POINTER);
+
     while(true) {
         size_t changes_counter = 0;
         double evaluating_result = NAN;
-        _RETURN_IF_ERROR(expression_simplify_evaluate_subtree(expression,
-                                                              expression->root,
-                                                              &evaluating_result,
-                                                              &changes_counter,
-                                                              log_info));
+        _RETURN_IF_ERROR(simplify_evaluate_subtree(expression,
+                                                   expression->root,
+                                                   &evaluating_result,
+                                                   &changes_counter,
+                                                   log_info));
         if(!isnan(evaluating_result)) {
             _RETURN_IF_ERROR(expression_delete_subtree(expression, expression->root));
             expression->root = new_node(expression, NODE_TYPE_NUM, {.numeric_value = evaluating_result}, NULL, NULL);
@@ -344,11 +393,11 @@ expression_error_t expression_simplify(expression_t     *expression,
         }
 
         expression_node_t *simplifying_neutrals_result = NULL;
-        _RETURN_IF_ERROR(expression_simplify_neutrals(expression,
-                                                      expression->root,
-                                                      &changes_counter,
-                                                      &simplifying_neutrals_result,
-                                                      log_info));
+        _RETURN_IF_ERROR(simplify_neutrals(expression,
+                                           expression->root,
+                                           &changes_counter,
+                                           &simplifying_neutrals_result,
+                                           log_info));
         if(simplifying_neutrals_result != NULL) {
             _RETURN_IF_ERROR(nodes_storage_remove(&expression->nodes_storage, expression->root));
             expression->root = simplifying_neutrals_result;

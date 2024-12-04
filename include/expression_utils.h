@@ -3,9 +3,6 @@
 
 #include "expression_types.h"
 
-expression_error_t expression_clean_buffer   (const char         *expression,
-                                              size_t             *index);
-
 expression_error_t nodes_storage_remove      (nodes_storage_t    *storage,
                                               expression_node_t  *node);
 

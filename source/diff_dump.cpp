@@ -9,6 +9,7 @@
 #include "matan_killer.h"
 #include "variable_list.h"
 #include "expression_utils.h"
+#include "custom_assert.h"
 
 /*=========================================================================================================*/
 
@@ -27,9 +28,8 @@ static const size_t MaxSubstitutionSubtreeSize = 20;
 /*=========================================================================================================*/
 
 static const char *DifferentiationPhrases[] = {
-    "Путём использования херни:",
-    "Несложно заметить благодаря херне:",
-    "Ебал я этот матан, но всё же:"};
+    "Путём использования вашего недалёкого мозга можно заметить что:",
+    "Ебал я этот матан, но всё же:",};
 static const size_t DifferentiationPhrasesSize = sizeof(DifferentiationPhrases) / sizeof(DifferentiationPhrases[0]);
 
 /*=========================================================================================================*/
@@ -95,6 +95,9 @@ static expression_error_t latex_log_check_substitutions         (latex_log_info_
 
 expression_error_t technical_dump_ctor(expression_t *expression,
                                        const char   *filename) {
+    _C_ASSERT(expression != NULL, return EXPRESSION_NULL_POINTER    );
+    _C_ASSERT(filename   != NULL, return EXPRESSION_INVALID_FILENAME);
+
     char dump_filename[256] = {};
     sprintf(dump_filename, "logs/%s.html", filename);
     expression->dump_info.technical_file = fopen(dump_filename, "w");
@@ -115,6 +118,8 @@ expression_error_t technical_dump_ctor(expression_t *expression,
 }
 
 expression_error_t technical_dump_dtor(expression_t *expression) {
+    _C_ASSERT(expression != NULL, return EXPRESSION_NULL_POINTER);
+
     fclose(expression->dump_info.technical_file);
     expression->dump_info.technical_file = NULL;
     expression->dump_info.technical_filename = NULL;
@@ -127,6 +132,9 @@ expression_error_t technical_dump_dtor(expression_t *expression) {
 expression_error_t technical_dump(expression_t      *expression,
                                   expression_node_t *current_node,
                                   const char        *format, ...) {
+    _C_ASSERT(expression != NULL, return EXPRESSION_NULL_POINTER       );
+    _C_ASSERT(format     != NULL, return EXPRESSION_INVALID_DUMP_FORMAT);
+
     char dot_filename[256] = {};
     sprintf(dot_filename,
             "logs/dot/%s%04llx.dot",
@@ -138,7 +146,9 @@ expression_error_t technical_dump(expression_t      *expression,
     fprintf(dot_file,
             "digraph {\n"
             "node[shape = Mrecord, style = filled];\n");
-    _RETURN_IF_ERROR(technical_dump_write_subtree(expression, expression->root, dot_file, 0, current_node));
+    if(expression->root != NULL) {
+        _RETURN_IF_ERROR(technical_dump_write_subtree(expression, expression->root, dot_file, 0, current_node));
+    }
 
     fprintf(dot_file, "}");
 
@@ -180,6 +190,10 @@ expression_error_t technical_dump_write_subtree(expression_t      *expression,
                                                 FILE              *dot_file,
                                                 size_t             level,
                                                 expression_node_t *current_node) {
+    _C_ASSERT(expression != NULL, return EXPRESSION_NULL_POINTER      );
+    _C_ASSERT(node       != NULL, return EXPRESSION_NODE_NULL_POINTER );
+    _C_ASSERT(dot_file   != NULL, return EXPRESSION_WRITING_FILE_ERROR);
+
     fprintf(dot_file,
             "node%p[fillcolor = \"%s\", "
             "rank = %llu, "
@@ -238,8 +252,11 @@ const char *string_node_type(expression_node_t *node) {
 
 const char *string_node_value(expression_t      *expression,
                               expression_node_t *node) {
+    _C_ASSERT(expression != NULL, return NULL);
+
     static char value_string[256] = {};
     if(node == NULL) {
+        value_string[0] = '\0';
         return value_string;
     }
     switch(node->type) {
@@ -300,6 +317,11 @@ expression_error_t latex_log_ctor(latex_log_info_t *log_info,
                                   const char       *filename,
                                   expression_t     *expression,
                                   expression_t     *derivative) {
+    _C_ASSERT(log_info   != NULL, return EXPRESSION_LOG_INFO_NULL_POINTER);
+    _C_ASSERT(filename   != NULL, return EXPRESSION_INVALID_DUMP_FILENAME);
+    _C_ASSERT(expression != NULL, return EXPRESSION_NULL_POINTER         );
+    _C_ASSERT(derivative != NULL, return EXPRESSION_NULL_POINTER         );
+
     char latex_filename[256] = {};
     srand((unsigned)time(NULL));
 
@@ -330,6 +352,8 @@ expression_error_t latex_log_ctor(latex_log_info_t *log_info,
 /*=========================================================================================================*/
 
 expression_error_t latex_log_dtor(latex_log_info_t *log_info) {
+    _C_ASSERT(log_info != NULL, return EXPRESSION_LOG_INFO_NULL_POINTER);
+
     fprintf(log_info->file, "\\end{document}\n");
     fclose(log_info->file);
 
@@ -348,6 +372,10 @@ expression_error_t latex_log_write(latex_log_info_t  *log_info,
                                    expression_node_t *expression_node,
                                    expression_node_t *derivative_node,
                                    math_action_t      action) {
+    _C_ASSERT(log_info        != NULL, return EXPRESSION_LOG_INFO_NULL_POINTER);
+    _C_ASSERT(expression_node != NULL, return EXPRESSION_NODE_NULL_POINTER    );
+    _C_ASSERT(derivative_node != NULL, return EXPRESSION_NODE_NULL_POINTER    );
+
     _RETURN_IF_ERROR(latex_log_write_before(log_info, expression_node, action));
     _RETURN_IF_ERROR(latex_log_write_after(log_info, derivative_node));
     return EXPRESSION_SUCCESS;
@@ -358,6 +386,9 @@ expression_error_t latex_log_write(latex_log_info_t  *log_info,
 expression_error_t latex_log_write_before(latex_log_info_t  *log_info,
                                           expression_node_t *node,
                                           math_action_t      action) {
+    _C_ASSERT(log_info != NULL, return EXPRESSION_LOG_INFO_NULL_POINTER);
+    _C_ASSERT(node     != NULL, return EXPRESSION_NODE_NULL_POINTER    );
+
     _RETURN_IF_ERROR(latex_log_check_substitutions(log_info, node));
     const char *phrase = get_action_phrase(action);
 
@@ -372,6 +403,9 @@ expression_error_t latex_log_write_before(latex_log_info_t  *log_info,
 
 expression_error_t  latex_log_write_after(latex_log_info_t  *log_info,
                                          expression_node_t *node) {
+    _C_ASSERT(log_info != NULL, return EXPRESSION_LOG_INFO_NULL_POINTER);
+    _C_ASSERT(node     != NULL, return EXPRESSION_NODE_NULL_POINTER    );
+
     _RETURN_IF_ERROR(latex_log_check_substitutions(log_info, node));
     fprintf(log_info->file, "преобразуется в:\n\\[ y = ");
     _RETURN_IF_ERROR(latex_write_subtree(log_info, node));
@@ -385,6 +419,9 @@ expression_error_t  latex_log_write_after(latex_log_info_t  *log_info,
 
 expression_error_t latex_write_subtree(latex_log_info_t  *log_info,
                                        expression_node_t *node) {
+    _C_ASSERT(log_info != NULL, return EXPRESSION_LOG_INFO_NULL_POINTER);
+    _C_ASSERT(node     != NULL, return EXPRESSION_NODE_NULL_POINTER    );
+
     if(node->is_substitution) {
         log_info->substitution_to_write[log_info->to_write_number++] = node;
         fprintf(log_info->file, "{%s}", node->substitution_name);
@@ -415,6 +452,9 @@ expression_error_t latex_write_subtree(latex_log_info_t  *log_info,
 
 expression_error_t latex_write_inorder(latex_log_info_t  *log_info,
                                        expression_node_t *node) {
+    _C_ASSERT(log_info != NULL, return EXPRESSION_LOG_INFO_NULL_POINTER);
+    _C_ASSERT(node     != NULL, return EXPRESSION_NODE_NULL_POINTER    );
+
     fprintf(log_info->file, "{%s",
             is_leaf(node->left) ? "" : "(");
 
@@ -436,6 +476,9 @@ expression_error_t latex_write_inorder(latex_log_info_t  *log_info,
 
 expression_error_t latex_write_preorder_one_arg(latex_log_info_t  *log_info,
                                                 expression_node_t *node) {
+    _C_ASSERT(log_info != NULL, return EXPRESSION_LOG_INFO_NULL_POINTER);
+    _C_ASSERT(node     != NULL, return EXPRESSION_NODE_NULL_POINTER    );
+
     fprintf(log_info->file, "%s {%s",
             get_latex_function(node->value.operation),
             is_leaf(node->right) ? "" : "(");
@@ -451,6 +494,9 @@ expression_error_t latex_write_preorder_one_arg(latex_log_info_t  *log_info,
 
 expression_error_t latex_write_preorder_two_args(latex_log_info_t  *log_info,
                                                  expression_node_t *node) {
+    _C_ASSERT(log_info != NULL, return EXPRESSION_LOG_INFO_NULL_POINTER);
+    _C_ASSERT(node     != NULL, return EXPRESSION_NODE_NULL_POINTER    );
+
     fprintf(log_info->file, "%s {",
             get_latex_function(node->value.operation));
 
@@ -466,8 +512,11 @@ expression_error_t latex_write_preorder_two_args(latex_log_info_t  *log_info,
 
 /*=========================================================================================================*/
 
-expression_error_t latex_write_preorder_two_args_index(latex_log_info_t  *log_info,
-                                                       expression_node_t *node) {
+expression_error_t latex_write_log(latex_log_info_t  *log_info,
+                                   expression_node_t *node) {
+    _C_ASSERT(log_info != NULL, return EXPRESSION_LOG_INFO_NULL_POINTER);
+    _C_ASSERT(node     != NULL, return EXPRESSION_NODE_NULL_POINTER    );
+
     fprintf(log_info->file, "%s_{%s",
             get_latex_function(node->value.operation),
             is_leaf(node->left) ? "" : "(");
@@ -534,6 +583,9 @@ const char *get_action_phrase(math_action_t action) {
 
 expression_error_t latex_log_check_substitutions(latex_log_info_t  *log_info,
                                                  expression_node_t *node) {
+    _C_ASSERT(log_info != NULL, return EXPRESSION_LOG_INFO_NULL_POINTER);
+    _C_ASSERT(node     != NULL, return EXPRESSION_NODE_NULL_POINTER    );
+
     if(log_info->derivative->root != NULL) {
     }
     size_t subtree_size = find_tree_size(node);
@@ -557,6 +609,8 @@ expression_error_t latex_log_check_substitutions(latex_log_info_t  *log_info,
 /*=========================================================================================================*/
 
 expression_error_t latex_log_write_substitutions(latex_log_info_t *log_info) {
+    _C_ASSERT(log_info != NULL, return EXPRESSION_LOG_INFO_NULL_POINTER);
+
     if(log_info->to_write_number != 0) {
         fprintf(log_info->file, "где\n");
     }
