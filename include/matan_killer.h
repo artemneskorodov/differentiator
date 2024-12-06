@@ -19,7 +19,7 @@ static const operation_prototype_t SupportedOperations[] = {
     {"cos",    OPERATION_COS   , "\\cos"   , NULL                 , latex_write_preorder_one_arg , diff_cos},
     {"^"  ,    OPERATION_POW   , "^"       , simplify_neutrals_pow, latex_write_inorder          , diff_pow},
     {"ln" ,    OPERATION_LN    , "\\ln"    , simplify_neutrals_log, latex_write_preorder_one_arg , diff_ln},
-    {"log",    OPERATION_LOG   , "\\log"   , simplify_neutrals_log, latex_write_log              , diff_log},
+    {"log",    OPERATION_LOG   , "\\log"   , simplify_neutrals_log, latex_write_func_log         , diff_log},
     {"tg" ,    OPERATION_TG    , "\\tg"    , NULL                 , latex_write_preorder_one_arg , diff_tg},
     {"ctg",    OPERATION_CTG   , "\\ctg"   , NULL                 , latex_write_preorder_one_arg , diff_ctg},
     {"arcsin", OPERATION_ARCSIN, "\\arcsin", NULL                 , latex_write_preorder_one_arg , diff_arcsin},
@@ -37,15 +37,20 @@ expression_error_t expression_ctor           (expression_t     *expression,
                                               variables_list_t *variables_list);
 
 expression_error_t expression_evaluate       (expression_t     *expression,
-                                              const char       *filename,
                                               double           *result);
 
 expression_error_t expression_differentiate  (expression_t     *expression,
-                                              expression_t     *derivative);
+                                              expression_t     *derivative,
+                                              latex_log_info_t *log_info);
 
 expression_error_t expression_dtor           (expression_t     *expression);
 
 expression_error_t expression_read_from_user (expression_t     *expression,
                                               const char       *filename);
+
+expression_error_t expression_tailor         (expression_t     *expression,
+                                              expression_t     *tailor,
+                                              size_t            members,
+                                              latex_log_info_t *log_info);
 
 #endif

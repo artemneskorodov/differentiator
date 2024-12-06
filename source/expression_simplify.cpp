@@ -105,10 +105,12 @@ expression_error_t evaluate_subtree_operation(expression_t      *expression,
         if(node->left->left == NULL && node->left->right == NULL) {
             return EXPRESSION_SUCCESS;
         }
-        _RETURN_IF_ERROR(latex_log_write_before(log_info, node, SIMPLIFICATION_EVALUATE));
+        _RETURN_IF_ERROR(latex_log_write(log_info, SIMPLIFICATION_EVALUATE, node));
+
         _RETURN_IF_ERROR(expression_delete_subtree(expression, node->left));
         node->left = new_node(expression, NODE_TYPE_NUM, {.numeric_value = result_left}, NULL, NULL);
-        _RETURN_IF_ERROR(latex_log_write_after(log_info, node));
+
+        _RETURN_IF_ERROR(latex_log_write(log_info, DIFF_RESULT, node));
         (*changes_counter)++;
         return EXPRESSION_SUCCESS;
     }
@@ -117,10 +119,12 @@ expression_error_t evaluate_subtree_operation(expression_t      *expression,
         if(node->right->left == NULL && node->right->right == NULL) {
             return EXPRESSION_SUCCESS;
         }
-        _RETURN_IF_ERROR(latex_log_write_before(log_info, node, SIMPLIFICATION_EVALUATE));
+        _RETURN_IF_ERROR(latex_log_write(log_info, SIMPLIFICATION_EVALUATE, node));
+
         _RETURN_IF_ERROR(expression_delete_subtree(expression, node->right));
         node->right = new_node(expression, NODE_TYPE_NUM, {.numeric_value = result_right}, NULL, NULL);
-        _RETURN_IF_ERROR(latex_log_write_after(log_info, node));
+
+        _RETURN_IF_ERROR(latex_log_write(log_info, DIFF_RESULT, node));
         (*changes_counter)++;
         return EXPRESSION_SUCCESS;
     }
@@ -203,17 +207,21 @@ expression_error_t simplify_neutrals_add(expression_t       *expression,
     _C_ASSERT(node            != NULL, return EXPRESSION_NODE_NULL_POINTER    );
 
     if(is_node_equal(node->right, 0)) {
-        _RETURN_IF_ERROR(latex_log_write_before(log_info, node, SIMPLIFICATION_NEUTRALS));
+        _RETURN_IF_ERROR(latex_log_write(log_info, SIMPLIFICATION_NEUTRALS, node));
+
         _RETURN_IF_ERROR(expression_delete_subtree(expression, node->right));
         *result =  node->left;
-        _RETURN_IF_ERROR(latex_log_write_after(log_info, node->left));
+
+        _RETURN_IF_ERROR(latex_log_write(log_info, DIFF_RESULT, node->left));
         return EXPRESSION_SUCCESS;
     }
     if(is_node_equal(node->left, 0)) {
-        _RETURN_IF_ERROR(latex_log_write_before(log_info, node, SIMPLIFICATION_NEUTRALS));
+        _RETURN_IF_ERROR(latex_log_write(log_info, SIMPLIFICATION_NEUTRALS, node));
+
         _RETURN_IF_ERROR(expression_delete_subtree(expression, node->left));
         *result = node->right;
-        _RETURN_IF_ERROR(latex_log_write_after(log_info, node->right));
+
+        _RETURN_IF_ERROR(latex_log_write(log_info, DIFF_RESULT, node->right));
         return EXPRESSION_SUCCESS;
     }
 
@@ -232,10 +240,12 @@ expression_error_t simplify_neutrals_sub(expression_t       *expression,
     _C_ASSERT(node            != NULL, return EXPRESSION_NODE_NULL_POINTER    );
 
     if(is_node_equal(node->right, 0)) {
-        _RETURN_IF_ERROR(latex_log_write_before(log_info, node, SIMPLIFICATION_NEUTRALS));
+        _RETURN_IF_ERROR(latex_log_write(log_info, SIMPLIFICATION_NEUTRALS, node));
+
         _RETURN_IF_ERROR(expression_delete_subtree(expression, node->right));
         *result = node->left;
-        _RETURN_IF_ERROR(latex_log_write_after(log_info, node->left));
+
+        _RETURN_IF_ERROR(latex_log_write(log_info, DIFF_RESULT, node->left));
         return EXPRESSION_SUCCESS;
     }
     return EXPRESSION_SUCCESS;
@@ -253,24 +263,28 @@ expression_error_t simplify_neutrals_mul(expression_t       *expression,
     _C_ASSERT(node            != NULL, return EXPRESSION_NODE_NULL_POINTER    );
 
     if(is_node_equal(node->left, 0) || is_node_equal(node->right, 0)) {
-        _RETURN_IF_ERROR(latex_log_write_before(log_info, node, SIMPLIFICATION_NEUTRALS));
+        _RETURN_IF_ERROR(latex_log_write(log_info, SIMPLIFICATION_NEUTRALS, node));
+
         _RETURN_IF_ERROR(set_node_to_const(expression, node, 0));
         *result = node;
-        _RETURN_IF_ERROR(latex_log_write_after(log_info, node));
+
+        _RETURN_IF_ERROR(latex_log_write(log_info, DIFF_RESULT, node));
         return EXPRESSION_SUCCESS;
     }
     if(is_node_equal(node->right, 1)) {
-        _RETURN_IF_ERROR(latex_log_write_before(log_info, node, SIMPLIFICATION_NEUTRALS));
+        _RETURN_IF_ERROR(latex_log_write(log_info, SIMPLIFICATION_NEUTRALS, node));
         _RETURN_IF_ERROR(expression_delete_subtree(expression, node->right));
         *result = node->left;
-        _RETURN_IF_ERROR(latex_log_write_after(log_info, node->left));
+
+        _RETURN_IF_ERROR(latex_log_write(log_info, DIFF_RESULT, node->left));
         return EXPRESSION_SUCCESS;
     }
     if(is_node_equal(node->left, 1)) {
-        _RETURN_IF_ERROR(latex_log_write_before(log_info, node, SIMPLIFICATION_NEUTRALS));
+        _RETURN_IF_ERROR(latex_log_write(log_info, SIMPLIFICATION_NEUTRALS, node));
         _RETURN_IF_ERROR(expression_delete_subtree(expression, node->left));
         *result = node->right;
-        _RETURN_IF_ERROR(latex_log_write_after(log_info, node->right));
+
+        _RETURN_IF_ERROR(latex_log_write(log_info, DIFF_RESULT, node->right));
         return EXPRESSION_SUCCESS;
     }
 
@@ -289,17 +303,21 @@ expression_error_t simplify_neutrals_div(expression_t       *expression,
     _C_ASSERT(node            != NULL, return EXPRESSION_NODE_NULL_POINTER    );
 
     if(is_node_equal(node->right, 1)) {
-        _RETURN_IF_ERROR(latex_log_write_before(log_info, node, SIMPLIFICATION_NEUTRALS));
+        _RETURN_IF_ERROR(latex_log_write(log_info, SIMPLIFICATION_NEUTRALS, node));
+
         _RETURN_IF_ERROR(expression_delete_subtree(expression, node->right));
         *result = node->left;
-        _RETURN_IF_ERROR(latex_log_write_after(log_info, node->left));
+
+        _RETURN_IF_ERROR(latex_log_write(log_info, DIFF_RESULT, node->left));
         return EXPRESSION_SUCCESS;
     }
     if(is_node_equal(node->left, 0)) {
-        _RETURN_IF_ERROR(latex_log_write_before(log_info, node, SIMPLIFICATION_NEUTRALS));
+        _RETURN_IF_ERROR(latex_log_write(log_info, SIMPLIFICATION_NEUTRALS, node));
+
         _RETURN_IF_ERROR(set_node_to_const(expression, node, 0));
         *result = node;
-        _RETURN_IF_ERROR(latex_log_write_after(log_info, node));
+
+        _RETURN_IF_ERROR(latex_log_write(log_info, DIFF_RESULT, node));
         return EXPRESSION_SUCCESS;
     }
 
@@ -318,31 +336,39 @@ expression_error_t simplify_neutrals_pow(expression_t       *expression,
     _C_ASSERT(node            != NULL, return EXPRESSION_NODE_NULL_POINTER    );
 
     if(is_node_equal(node->left, 0)) {
-        _RETURN_IF_ERROR(latex_log_write_before(log_info, node, SIMPLIFICATION_NEUTRALS));
+        _RETURN_IF_ERROR(latex_log_write(log_info, SIMPLIFICATION_NEUTRALS, node));
+
         _RETURN_IF_ERROR(set_node_to_const(expression, node, 0));
         *result = node;
-        _RETURN_IF_ERROR(latex_log_write_after(log_info, node));
+
+        _RETURN_IF_ERROR(latex_log_write(log_info, DIFF_RESULT, node));
         return EXPRESSION_SUCCESS;
     }
     if(is_node_equal(node->left, 1)) {
-        _RETURN_IF_ERROR(latex_log_write_before(log_info, node, SIMPLIFICATION_NEUTRALS));
+        _RETURN_IF_ERROR(latex_log_write(log_info, SIMPLIFICATION_NEUTRALS, node));
+
         _RETURN_IF_ERROR(set_node_to_const(expression, node, 1));
         *result = node;
-        _RETURN_IF_ERROR(latex_log_write_after(log_info, node));
+
+        _RETURN_IF_ERROR(latex_log_write(log_info, DIFF_RESULT, node));
         return EXPRESSION_SUCCESS;
     }
     if(is_node_equal(node->right, 1)) {
-        _RETURN_IF_ERROR(latex_log_write_before(log_info, node, SIMPLIFICATION_NEUTRALS));
+        _RETURN_IF_ERROR(latex_log_write(log_info, SIMPLIFICATION_NEUTRALS, node));
+
         _RETURN_IF_ERROR(expression_delete_subtree(expression, node->right));
         *result = node->left;
-        _RETURN_IF_ERROR(latex_log_write_after(log_info, node->left));
+
+        _RETURN_IF_ERROR(latex_log_write(log_info, DIFF_RESULT, node->left));
         return EXPRESSION_SUCCESS;
     }
     if(is_node_equal(node->right, 0)) {
-        _RETURN_IF_ERROR(latex_log_write_before(log_info, node, SIMPLIFICATION_NEUTRALS));
+        _RETURN_IF_ERROR(latex_log_write(log_info, SIMPLIFICATION_NEUTRALS, node));
+
         _RETURN_IF_ERROR(set_node_to_const(expression, node, 1));
         *result = node;
-        _RETURN_IF_ERROR(latex_log_write_after(log_info, node));
+
+        _RETURN_IF_ERROR(latex_log_write(log_info, DIFF_RESULT, node));
         return EXPRESSION_SUCCESS;
     }
 
@@ -361,10 +387,12 @@ expression_error_t simplify_neutrals_log(expression_t       *expression,
     _C_ASSERT(node            != NULL, return EXPRESSION_NODE_NULL_POINTER    );
 
     if(is_node_equal(node->right, 1)) {
-        _RETURN_IF_ERROR(latex_log_write_before(log_info, node, SIMPLIFICATION_NEUTRALS));
+        _RETURN_IF_ERROR(latex_log_write(log_info, SIMPLIFICATION_NEUTRALS, node));
+
         _RETURN_IF_ERROR(set_node_to_const(expression, node, 0));
         *result = node;
-        _RETURN_IF_ERROR(latex_log_write_after(log_info, node));
+
+        _RETURN_IF_ERROR(latex_log_write(log_info, DIFF_RESULT, node));
         return EXPRESSION_SUCCESS;
     }
 

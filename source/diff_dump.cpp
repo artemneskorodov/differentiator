@@ -58,10 +58,37 @@ static const size_t WritingResultPhrasesSize = sizeof(WritingResultPhrases) / si
 
 /*=========================================================================================================*/
 
-static const char *LatexTitlePhrases[] = {
+static const char *DiffStartPhrases[] = {
     "Сегодня мы будем дифференцировать вот такую ебаторию:",
     "Несмотря на то что меня не въебало, будем заниматься такой хуйнёй:"};
-static const size_t LatexTitlePhrasesSize = sizeof(LatexTitlePhrases) / sizeof(LatexTitlePhrases[0]);
+static const size_t DiffStartPhrasesSize = sizeof(DiffStartPhrases) / sizeof(DiffStartPhrases[0]);
+
+/*=========================================================================================================*/
+
+static const char *DiffResultPhrases[] = {
+    "преобразуется в:"};
+static const size_t DiffResultPhrasesSize = sizeof(DiffResultPhrases) / sizeof(DiffResultPhrases[0]);
+
+/*=========================================================================================================*/
+
+static const char *TailorStartPhrases[] = {
+    "Ебанём ка такую хуйню в тейлора:",
+    "СОСАЛ?"};
+static const size_t TailorStartPhrasesSize = sizeof(TailorStartPhrases) / sizeof(TailorStartPhrases[0]);
+
+/*=========================================================================================================*/
+
+static const char *TailorNewDiffPhrases[] = {
+    "А теперь хуйнём такую производную:",
+    "Заебало уже блять, а ещё физос делать",};
+static const size_t TailorNewDiffPhrasesSize = sizeof(TailorNewDiffPhrases) / sizeof(TailorNewDiffPhrases[0]);
+
+/*=========================================================================================================*/
+
+static const char *TailorEvaluatePhrases[] = {
+    "Ебать наконец-то нашли",
+    "Вот такую хуйню:"};
+static const size_t TailorEvaluatePhrasesSize = sizeof(TailorEvaluatePhrases) / sizeof(TailorEvaluatePhrases[0]);
 
 /*=========================================================================================================*/
 
@@ -81,7 +108,7 @@ static const char        *node_color                            (expression_node
 
 static const char        *get_latex_function                    (operation_t        operation);
 
-static const char        *get_action_phrase                     (math_action_t      action);
+static const char        *get_action_phrase                     (log_action_t       action);
 
 static expression_error_t latex_write_subtree                   (latex_log_info_t  *log_info,
                                                                  expression_node_t *node);
@@ -342,10 +369,42 @@ expression_error_t latex_log_ctor(latex_log_info_t *log_info,
             "\\title{Методическое пособие по ёбани}\n"
             "\\author{by хуйня corporated}\n"
             "\\begin{document}\n"
-            "\\maketitle\n%s\n", get_action_phrase(LATEX_TITLE));
+            "\\maketitle\n");
+    return EXPRESSION_SUCCESS;
+}
+
+/*=========================================================================================================*/
+
+expression_error_t latex_log_write(latex_log_info_t  *log_info,
+                                   log_action_t       action,
+                                   expression_node_t *node, ...) {
+    _C_ASSERT(log_info != NULL, return EXPRESSION_LOG_INFO_NULL_POINTER);
+    _C_ASSERT(node     != NULL, return EXPRESSION_NODE_NULL_POINTER    );
+
+    if(action == TAILOR_NEW_DIFF) {
+        va_list args;
+        va_start(args, node);
+        size_t value = va_arg(args, size_t);
+        fprintf(log_info->file, "%llu. ", value);
+        va_end(args);
+    }
+    if(action == TAILOR_EVALUATE) {
+        va_list args;
+        va_start(args, node);
+        size_t derivative_number = va_arg(args, size_t);
+        double value = va_arg(args, double);
+        fprintf(log_info->file, "\\[f^{(%llu)}=%lg\\]", derivative_number, value);
+        va_end(args);
+        return EXPRESSION_SUCCESS;
+    }
+    const char *phrase = get_action_phrase(action);
+    fprintf(log_info->file, "%s\n", phrase);
+
+    _RETURN_IF_ERROR(latex_log_check_substitutions(log_info, node));
     fprintf(log_info->file, "\\[ y = ");
-    _RETURN_IF_ERROR(latex_write_subtree(log_info, expression->root));
-    fprintf(log_info->file, "\\vspace*{10mm}\\]");
+    _RETURN_IF_ERROR(latex_write_subtree(log_info, node));
+    fprintf(log_info->file, "\\]\n");
+    _RETURN_IF_ERROR(latex_log_write_substitutions(log_info));
     return EXPRESSION_SUCCESS;
 }
 
@@ -363,55 +422,6 @@ expression_error_t latex_log_dtor(latex_log_info_t *log_info) {
 
     log_info->file = NULL;
     log_info->filename = NULL;
-    return EXPRESSION_SUCCESS;
-}
-
-/*=========================================================================================================*/
-
-expression_error_t latex_log_write(latex_log_info_t  *log_info,
-                                   expression_node_t *expression_node,
-                                   expression_node_t *derivative_node,
-                                   math_action_t      action) {
-    _C_ASSERT(log_info        != NULL, return EXPRESSION_LOG_INFO_NULL_POINTER);
-    _C_ASSERT(expression_node != NULL, return EXPRESSION_NODE_NULL_POINTER    );
-    _C_ASSERT(derivative_node != NULL, return EXPRESSION_NODE_NULL_POINTER    );
-
-    _RETURN_IF_ERROR(latex_log_write_before(log_info, expression_node, action));
-    _RETURN_IF_ERROR(latex_log_write_after(log_info, derivative_node));
-    return EXPRESSION_SUCCESS;
-}
-
-/*=========================================================================================================*/
-
-expression_error_t latex_log_write_before(latex_log_info_t  *log_info,
-                                          expression_node_t *node,
-                                          math_action_t      action) {
-    _C_ASSERT(log_info != NULL, return EXPRESSION_LOG_INFO_NULL_POINTER);
-    _C_ASSERT(node     != NULL, return EXPRESSION_NODE_NULL_POINTER    );
-
-    _RETURN_IF_ERROR(latex_log_check_substitutions(log_info, node));
-    const char *phrase = get_action_phrase(action);
-
-    fprintf(log_info->file, "%s\n\\[ y = ", phrase);
-    _RETURN_IF_ERROR(latex_write_subtree(log_info, node));
-    fprintf(log_info->file, "\\]");
-    _RETURN_IF_ERROR(latex_log_write_substitutions(log_info));
-    return EXPRESSION_SUCCESS;
-}
-
-/*=========================================================================================================*/
-
-expression_error_t  latex_log_write_after(latex_log_info_t  *log_info,
-                                         expression_node_t *node) {
-    _C_ASSERT(log_info != NULL, return EXPRESSION_LOG_INFO_NULL_POINTER);
-    _C_ASSERT(node     != NULL, return EXPRESSION_NODE_NULL_POINTER    );
-
-    _RETURN_IF_ERROR(latex_log_check_substitutions(log_info, node));
-    fprintf(log_info->file, "преобразуется в:\n\\[ y = ");
-    _RETURN_IF_ERROR(latex_write_subtree(log_info, node));
-    fprintf(log_info->file, "\\]\n");
-    _RETURN_IF_ERROR(latex_log_write_substitutions(log_info));
-    fprintf(log_info->file, "\\vspace*{10mm}\n\n");
     return EXPRESSION_SUCCESS;
 }
 
@@ -512,7 +522,7 @@ expression_error_t latex_write_preorder_two_args(latex_log_info_t  *log_info,
 
 /*=========================================================================================================*/
 
-expression_error_t latex_write_log(latex_log_info_t  *log_info,
+expression_error_t latex_write_func_log(latex_log_info_t  *log_info,
                                    expression_node_t *node) {
     _C_ASSERT(log_info != NULL, return EXPRESSION_LOG_INFO_NULL_POINTER);
     _C_ASSERT(node     != NULL, return EXPRESSION_NODE_NULL_POINTER    );
@@ -542,7 +552,7 @@ const char *get_latex_function(operation_t operation) {
 
 /*=========================================================================================================*/
 
-const char *get_action_phrase(math_action_t action) {
+const char *get_action_phrase(log_action_t action) {
     const char **phrases_array = NULL;
     size_t phrases_array_size = 0;
     switch(action) {
@@ -566,9 +576,29 @@ const char *get_action_phrase(math_action_t action) {
             phrases_array_size = WritingResultPhrasesSize;
             break;
         }
-        case LATEX_TITLE: {
-            phrases_array = LatexTitlePhrases;
-            phrases_array_size = LatexTitlePhrasesSize;
+        case DIFF_START: {
+            phrases_array = DiffStartPhrases;
+            phrases_array_size = DiffStartPhrasesSize;
+            break;
+        }
+        case DIFF_RESULT: {
+            phrases_array = DiffResultPhrases;
+            phrases_array_size = DiffResultPhrasesSize;
+            break;
+        }
+        case TAILOR_START: {
+            phrases_array = TailorStartPhrases;
+            phrases_array_size = TailorStartPhrasesSize;
+            break;
+        }
+        case TAILOR_NEW_DIFF: {
+            phrases_array = TailorNewDiffPhrases;
+            phrases_array_size = TailorNewDiffPhrasesSize;
+            break;
+        }
+        case TAILOR_EVALUATE: {
+            phrases_array = TailorEvaluatePhrases;
+            phrases_array_size = TailorEvaluatePhrasesSize;
             break;
         }
         default: {
@@ -584,7 +614,6 @@ const char *get_action_phrase(math_action_t action) {
 expression_error_t latex_log_check_substitutions(latex_log_info_t  *log_info,
                                                  expression_node_t *node) {
     _C_ASSERT(log_info != NULL, return EXPRESSION_LOG_INFO_NULL_POINTER);
-    _C_ASSERT(node     != NULL, return EXPRESSION_NODE_NULL_POINTER    );
 
     if(log_info->derivative->root != NULL) {
     }
@@ -625,3 +654,4 @@ expression_error_t latex_log_write_substitutions(latex_log_info_t *log_info) {
     log_info->to_write_number = 0;
     return EXPRESSION_SUCCESS;
 }
+

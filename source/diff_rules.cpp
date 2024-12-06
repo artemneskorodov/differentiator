@@ -47,7 +47,6 @@ expression_node_t *differentiate_node(expression_t      *derivative,
     _C_ASSERT(derivative != NULL, return NULL);
     _C_ASSERT(node       != NULL, return NULL);
     _C_ASSERT(log_info   != NULL, return NULL);
-
     switch(node->type) {
         case NODE_TYPE_NUM: {
             return _CONST(0);
@@ -65,7 +64,8 @@ expression_node_t *differentiate_node(expression_t      *derivative,
                                                                                                              node,
                                                                                                              log_info,
                                                                                                              diff_variable);
-            latex_log_write(log_info, node, differentiation_result, DIFFERENTIATION);
+            latex_log_write(log_info, DIFFERENTIATION, node);
+            latex_log_write(log_info, DIFF_RESULT, differentiation_result);
             return differentiation_result;
         }
         default: {

@@ -232,7 +232,11 @@ expression_node_t *copy_node(expression_t *derivative, expression_node_t *node) 
 /*=========================================================================================================*/
 
 bool is_leaf(expression_node_t *node) {
-    _C_ASSERT(node != NULL, return false);
+    // _C_ASSERT(node != NULL, return false);
+
+    if(node == NULL) {
+        return false;
+    }
 
     if((node->left == NULL && node->right == NULL) || node->is_substitution) {
         return true;

@@ -113,18 +113,10 @@ expression_error_t expression_read_from_file(char       **expression_string,
 /*=========================================================================================================*/
 
 expression_error_t expression_evaluate(expression_t *expression,
-                                       const char   *filename,
                                        double       *result) {
     _C_ASSERT(expression != NULL, return EXPRESSION_NULL_POINTER       );
-    _C_ASSERT(filename   != NULL, return EXPRESSION_INVALID_FILENAME   );
     _C_ASSERT(result     != NULL, return EXPRESSION_RESULT_NULL_POINTER);
 
-    if(filename == NULL) {
-        _RETURN_IF_ERROR(variables_list_set_from_console(expression->variables_list));
-    }
-    else {
-        _RETURN_IF_ERROR(variables_list_set_from_file(expression->variables_list, filename));
-    }
     _RETURN_IF_ERROR(expression_evaluate_node(expression, expression->root, result));
     return EXPRESSION_SUCCESS;
 }
@@ -179,24 +171,62 @@ expression_error_t expression_evaluate_node(expression_t      *expression,
 
 /*=========================================================================================================*/
 
-expression_error_t expression_differentiate(expression_t *expression,
-                                            expression_t *derivative) {
+expression_error_t expression_differentiate(expression_t     *expression,
+                                            expression_t     *derivative,
+                                            latex_log_info_t *log_info) {
     _C_ASSERT(expression != NULL, return EXPRESSION_NULL_POINTER);
     _C_ASSERT(derivative != NULL, return EXPRESSION_NULL_POINTER);
 
-    latex_log_info_t log_info = {};
-    _RETURN_IF_ERROR(latex_log_ctor(&log_info, "diff_log", expression, derivative));
-    derivative->root = differentiate_node(derivative, expression->root, 0, &log_info);
+    derivative->root = differentiate_node(derivative, expression->root, 0, log_info);
     if(derivative->root == NULL) {
         return EXPRESSION_DIFFERENTIATING_ERROR;
     }
-
-    _RETURN_IF_ERROR(expression_simplify(derivative, &log_info));
-    _RETURN_IF_ERROR(latex_log_write_before(&log_info, derivative->root, WRITING_RESULT));
-    _RETURN_IF_ERROR(latex_log_dtor(&log_info));
-
-    technical_dump(derivative, NULL, "answer");
+    _RETURN_IF_ERROR(expression_simplify(derivative, log_info));
 
 
+    return EXPRESSION_SUCCESS;
+}
+
+expression_error_t expression_tailor(expression_t     *expression,
+                                     expression_t     *tailor,
+                                     size_t            members,
+                                     latex_log_info_t *log_info) {
+    _C_ASSERT(expression != NULL, return EXPRESSION_NULL_POINTER         );
+    _C_ASSERT(tailor     != NULL, return EXPRESSION_NULL_POINTER         );
+    _C_ASSERT(log_info   != NULL, return EXPRESSION_LOG_INFO_NULL_POINTER);
+
+    _RETURN_IF_ERROR(latex_log_write(log_info, TAILOR_START, expression->root));
+
+    _RETURN_IF_ERROR(nodes_storage_new_node(&tailor->nodes_storage, &tailor->root));
+    tailor->root->type = NODE_TYPE_OP;
+    tailor->root->value.operation = OPERATION_ADD;
+    expression_node_t *prev_node = NULL;
+    expression_node_t *current_node = tailor->root;
+    double factorial = 1;
+    for(size_t mem = 0; mem < members; mem++) {
+        double value = 0;
+        _RETURN_IF_ERROR(expression_evaluate(expression, &value));
+        _RETURN_IF_ERROR(latex_log_write(log_info, TAILOR_EVALUATE, expression->root, mem, value));
+        _RETURN_IF_ERROR(latex_log_write(log_info, TAILOR_NEW_DIFF, expression->root, mem));
+        expression_node_t *new_member = new_node(tailor, NODE_TYPE_OP, {.operation = OPERATION_MUL},
+                                                 new_node(tailor, NODE_TYPE_NUM, {.numeric_value = value/factorial}, NULL, NULL),
+                                                 new_node(tailor, NODE_TYPE_OP , {.operation = OPERATION_POW},
+                                                          new_node(tailor, NODE_TYPE_VAR, {.variable_index = 0         }, NULL, NULL),
+                                                          new_node(tailor, NODE_TYPE_NUM, {.numeric_value = (double)mem}, NULL, NULL)));
+        factorial *= (mem + 1);
+        if(mem + 1 != members) {
+            current_node->left = new_member;
+            _RETURN_IF_ERROR(expression_differentiate(expression, expression, log_info));
+            _RETURN_IF_ERROR(latex_log_write(log_info, WRITING_RESULT, expression->root));
+            current_node->right = new_node(tailor, NODE_TYPE_OP, {.operation = OPERATION_ADD}, NULL, NULL);
+            prev_node = current_node;
+            current_node = current_node->right;
+        }
+        else {
+            _RETURN_IF_ERROR(nodes_storage_remove(&tailor->nodes_storage, prev_node->right));
+            prev_node->right = new_member;
+        }
+    }
+    _RETURN_IF_ERROR(expression_simplify(tailor, log_info));
     return EXPRESSION_SUCCESS;
 }
