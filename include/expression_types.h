@@ -156,6 +156,7 @@ struct operation_prototype_t {
                                               expression_node_t *,
                                               latex_log_info_t *,
                                               size_t);
+    size_t               priority;
 };
 
 #endif

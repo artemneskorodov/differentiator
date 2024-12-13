@@ -40,6 +40,9 @@ bool               is_leaf                   (expression_node_t  *node);
 bool               is_node_equal             (expression_node_t  *node,
                                               double              value);
 
+bool               is_bigger_priority        (expression_node_t  *node,
+                                              expression_node_t  *child);
+
 size_t             find_tree_size            (expression_node_t  *node);
 
 size_t             count_variables           (expression_node_t *node,

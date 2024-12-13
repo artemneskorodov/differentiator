@@ -134,10 +134,11 @@ expression_node_t *pow_derivative(expression_t      *derivative,
                     _DIFF_RIGHT);
     }
     if(left != 0 && right == 0) {
-        return _MUL(_COPY_RIGHT,
+        return _MUL(_DIFF_LEFT,//TODO
+                    _MUL(_COPY_RIGHT,
                     _POW(_COPY_LEFT,
                          _SUB(_COPY_RIGHT,
-                              _CONST(1))));
+                              _CONST(1)))));
     }
 
     return _MUL(_ADD(_MUL(_DIFF_RIGHT,

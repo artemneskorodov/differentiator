@@ -359,3 +359,18 @@ expression_error_t set_node_to_const(expression_t *expression, expression_node_t
 
     return EXPRESSION_SUCCESS;
 }
+
+/*=========================================================================================================*/
+
+bool is_bigger_priority(expression_node_t *node, expression_node_t *child) {
+    if(child->type == NODE_TYPE_NUM ||
+       child->type == NODE_TYPE_VAR) {
+        return true;
+    }
+    if(node->type == NODE_TYPE_OP && child->type == NODE_TYPE_OP) {
+        if(SupportedOperations[node->value.operation].priority >= SupportedOperations[child->value.operation].priority) {
+            return true;
+        }
+    }
+    return false;
+}

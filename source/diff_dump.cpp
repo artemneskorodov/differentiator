@@ -22,7 +22,7 @@ static const char *const NodeColorTypeNumber        = "#D0E8C5";
 static const char *const NodeColorTypeVariable      = "#FFF8DE";
 static const char *const NodeColorCurrentNode       = "#C5D3E8";
 
-static const size_t MinSubstitutionSubtreeSize = 10;
+static const size_t MinSubstitutionSubtreeSize = 15;
 static const size_t MaxSubstitutionSubtreeSize = 20;
 
 /*=========================================================================================================*/
@@ -138,7 +138,7 @@ expression_error_t technical_dump_ctor(expression_t *expression,
 
     fprintf(expression->dump_info.technical_file,
             "<div>\n"
-            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+            "Technical dump\n"
             "</div>\n");
 
     return EXPRESSION_SUCCESS;
@@ -397,6 +397,14 @@ expression_error_t latex_log_write(latex_log_info_t  *log_info,
         va_end(args);
         return EXPRESSION_SUCCESS;
     }
+    if(action == WRITING_RESULT) {
+        fprintf(log_info->file, "Ебались мы с вот такой хернёй:\n");
+        _RETURN_IF_ERROR(latex_log_check_substitutions(log_info, log_info->expression->root));
+        fprintf(log_info->file, "\\[ y = ");
+        _RETURN_IF_ERROR(latex_write_subtree(log_info, log_info->expression->root));
+        fprintf(log_info->file, "\\]\n");
+        _RETURN_IF_ERROR(latex_log_write_substitutions(log_info));
+    }
     const char *phrase = get_action_phrase(action);
     fprintf(log_info->file, "%s\n", phrase);
 
@@ -466,19 +474,19 @@ expression_error_t latex_write_inorder(latex_log_info_t  *log_info,
     _C_ASSERT(node     != NULL, return EXPRESSION_NODE_NULL_POINTER    );
 
     fprintf(log_info->file, "{%s",
-            is_leaf(node->left) ? "" : "(");
+            is_bigger_priority(node, node->left) ? "" : "(");
 
     _RETURN_IF_ERROR(latex_write_subtree(log_info, node->left));
 
     fprintf(log_info->file, "%s} %s {%s",
-            is_leaf(node->left) ? "" : ")",
+            is_bigger_priority(node, node->left) ? "" : ")",
             get_latex_function(node->value.operation),
-            is_leaf(node->right) ? "" : "(");
+            is_bigger_priority(node, node->right) ? "" : "(");
 
     _RETURN_IF_ERROR(latex_write_subtree(log_info, node->right));
 
     fprintf(log_info->file, "%s}",
-            is_leaf(node->right) ? "" : ")");
+            is_bigger_priority(node, node->right) ? "" : ")");
     return EXPRESSION_SUCCESS;
 }
 
@@ -491,12 +499,12 @@ expression_error_t latex_write_preorder_one_arg(latex_log_info_t  *log_info,
 
     fprintf(log_info->file, "%s {%s",
             get_latex_function(node->value.operation),
-            is_leaf(node->right) ? "" : "(");
+            is_bigger_priority(node, node->right) ? "" : "(");
 
     _RETURN_IF_ERROR(latex_write_subtree(log_info, node->right));
 
     fprintf(log_info->file, "%s}",
-            is_leaf(node->right) ? "" : ")");
+            is_bigger_priority(node, node->right) ? "" : ")");
     return EXPRESSION_SUCCESS;
 }
 
@@ -529,18 +537,18 @@ expression_error_t latex_write_func_log(latex_log_info_t  *log_info,
 
     fprintf(log_info->file, "%s_{%s",
             get_latex_function(node->value.operation),
-            is_leaf(node->left) ? "" : "(");
+            is_bigger_priority(node, node->left) ? "" : "(");
 
     _RETURN_IF_ERROR(latex_write_subtree(log_info, node->left));
 
     fprintf(log_info->file, "%s}{%s",
-            is_leaf(node->left) ? "" : ")",
-            is_leaf(node->right) ? "" : "(");
+            is_bigger_priority(node, node->left) ? "" : ")",
+            is_bigger_priority(node, node->right) ? "" : "(");
 
     _RETURN_IF_ERROR(latex_write_subtree(log_info, node->right));
 
     fprintf(log_info->file, "%s}",
-            is_leaf(node->right) ? "" : ")");
+            is_bigger_priority(node, node->right) ? "" : ")");
     return EXPRESSION_SUCCESS;
 }
 

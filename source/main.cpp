@@ -25,13 +25,14 @@ int main(int argc, const char *argv[]) {
         printf("diff ctor | %d\n", expression_ctor(&derivative, "derv", &varlist));
 
         latex_log_info_t log_info = {};
-        printf("log ctor  | %d\n", latex_log_ctor(&log_info, "tailor", &expression, &derivative));
+        printf("log ctor  | %d\n", latex_log_ctor(&log_info, "diff", &expression, &derivative));
         latex_log_write(&log_info, DIFF_START, expression.root);
 
         printf("diff      | %d\n", expression_differentiate(&expression, &derivative, &log_info));
 
         latex_log_write(&log_info, WRITING_RESULT, derivative.root);
 
+        printf("dtor log  | %d\n", latex_log_dtor(&log_info));
         printf("dtor expr | %d\n", expression_dtor(&expression));
         printf("dtor diff | %d\n", expression_dtor(&derivative));
     }
