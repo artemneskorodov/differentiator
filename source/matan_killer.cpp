@@ -187,6 +187,8 @@ expression_error_t expression_differentiate(expression_t     *expression,
     return EXPRESSION_SUCCESS;
 }
 
+/*=========================================================================================================*/
+
 expression_error_t expression_tailor(expression_t     *expression,
                                      expression_t     *tailor,
                                      size_t            members,
@@ -195,9 +197,9 @@ expression_error_t expression_tailor(expression_t     *expression,
     _C_ASSERT(tailor     != NULL, return EXPRESSION_NULL_POINTER         );
     _C_ASSERT(log_info   != NULL, return EXPRESSION_LOG_INFO_NULL_POINTER);
 
-    _RETURN_IF_ERROR(latex_log_write(log_info, TAILOR_START, expression->root));
-
     _RETURN_IF_ERROR(nodes_storage_new_node(&tailor->nodes_storage, &tailor->root));
+    double point = 0;
+    _RETURN_IF_ERROR(variables_list_get_value(expression->variables_list, 0, &point));
     tailor->root->type = NODE_TYPE_OP;
     tailor->root->value.operation = OPERATION_ADD;
     expression_node_t *prev_node = NULL;
@@ -209,11 +211,13 @@ expression_error_t expression_tailor(expression_t     *expression,
         _RETURN_IF_ERROR(latex_log_write(log_info, TAILOR_EVALUATE, expression->root, mem, value));
         _RETURN_IF_ERROR(latex_log_write(log_info, TAILOR_NEW_DIFF, expression->root, mem));
         expression_node_t *new_member = new_node(tailor, NODE_TYPE_OP, {.operation = OPERATION_MUL},
-                                                 new_node(tailor, NODE_TYPE_NUM, {.numeric_value = value/factorial}, NULL, NULL),
+                                                 new_node(tailor, NODE_TYPE_NUM, {.numeric_value = value / factorial}, NULL, NULL),
                                                  new_node(tailor, NODE_TYPE_OP , {.operation = OPERATION_POW},
-                                                          new_node(tailor, NODE_TYPE_VAR, {.variable_index = 0         }, NULL, NULL),
+                                                          new_node(tailor, NODE_TYPE_OP, {.operation = OPERATION_SUB},
+                                                                   new_node(tailor, NODE_TYPE_VAR, {.variable_index = 0}, NULL, NULL),
+                                                                   new_node(tailor, NODE_TYPE_NUM, {.numeric_value = point}, NULL, NULL)),
                                                           new_node(tailor, NODE_TYPE_NUM, {.numeric_value = (double)mem}, NULL, NULL)));
-        factorial *= (mem + 1);
+        factorial *= (double)(mem + 1);
         if(mem + 1 != members) {
             current_node->left = new_member;
             _RETURN_IF_ERROR(expression_differentiate(expression, expression, log_info));
