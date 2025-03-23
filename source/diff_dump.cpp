@@ -28,39 +28,36 @@ static const size_t MaxSubstitutionSubtreeSize = 20;
 /*=========================================================================================================*/
 
 static const char *DifferentiationPhrases[] = {
-    "Путём использования вашего недалёкого мозга можно заметить что:",
-    "Ебал я этот матан, но всё же:",};
+    "Несложно заметить что:",
+    "Путём несложных рассуждений:",};
 static const size_t DifferentiationPhrasesSize = sizeof(DifferentiationPhrases) / sizeof(DifferentiationPhrases[0]);
 
 /*=========================================================================================================*/
 
 static const char *SimplifyEvaluationPhrases[] = {
-    "Ходил бы ты в пятый класс, знал бы что:",
-    "Используя калькулятор, если ты такой тупой, можно понять, что:",
-    "Нахуй этот ебучий блять матан, будем считать:"};
+    "Упрощая выражение:",
+    "Используя знания полученные в школе:"};
 static const size_t SimplifyEvaluationPhrasesSize = sizeof(SimplifyEvaluationPhrases) / sizeof(SimplifyEvaluationPhrases[0]);
 
 /*=========================================================================================================*/
 
 static const char *SimplifyNeutralsPhrases[] = {
-    "Ясен хуй:",
-    "Невероятно блять тяжело заметить:",
-    "Заметим, что данное действие нам нахуй не нужно:",
-    "Если не быть слепым, то можно заметить, что:"};
+    "Упрощая выражение:",
+    "Убирая ненужные действия:",
+    "Заметим, что данное действие нам не нужно:"};
 static const size_t SimplifyNeutralsPhrasesSize = sizeof(SimplifyNeutralsPhrases) / sizeof(SimplifyNeutralsPhrases[0]);
 
 /*=========================================================================================================*/
 
 static const char *WritingResultPhrases[] = {
-    "Подводя блядский итог:",
-    "Несмотря на все сложности нам удалось найти ответ на эту ебучую задачу:"};
+    "Подводя итог:",
+    "Несмотря на все сложности нам удалось найти ответ на эту задачу:"};
 static const size_t WritingResultPhrasesSize = sizeof(WritingResultPhrases) / sizeof(WritingResultPhrases[0]);
 
 /*=========================================================================================================*/
 
 static const char *DiffStartPhrases[] = {
-    "Сегодня мы будем дифференцировать вот такую ебаторию:",
-    "Несмотря на то что меня не въебало, будем заниматься такой хуйнёй:"};
+    "Сегодня мы будем дифференцировать вот такое выражение:"};
 static const size_t DiffStartPhrasesSize = sizeof(DiffStartPhrases) / sizeof(DiffStartPhrases[0]);
 
 /*=========================================================================================================*/
@@ -72,22 +69,21 @@ static const size_t DiffResultPhrasesSize = sizeof(DiffResultPhrases) / sizeof(D
 /*=========================================================================================================*/
 
 static const char *TailorStartPhrases[] = {
-    "Ебанём ка такую хуйню в тейлора:",
-    "СОСАЛ?"};
+    "Разложим данную функцию в ряд Тейлора:",
+    "Найдём многочлен Тейлора для такой функции:"};
 static const size_t TailorStartPhrasesSize = sizeof(TailorStartPhrases) / sizeof(TailorStartPhrases[0]);
 
 /*=========================================================================================================*/
 
 static const char *TailorNewDiffPhrases[] = {
-    "А теперь хуйнём такую производную:",
-    "Заебало уже блять, а ещё физос делать",};
+    "Найдём производную от этой функции:"};
 static const size_t TailorNewDiffPhrasesSize = sizeof(TailorNewDiffPhrases) / sizeof(TailorNewDiffPhrases[0]);
 
 /*=========================================================================================================*/
 
 static const char *TailorEvaluatePhrases[] = {
-    "Ебать наконец-то нашли",
-    "Вот такую хуйню:"};
+    "Подводя итог:",
+    "Получаем разложение в ряд Тейлора:"};
 static const size_t TailorEvaluatePhrasesSize = sizeof(TailorEvaluatePhrases) / sizeof(TailorEvaluatePhrases[0]);
 
 /*=========================================================================================================*/
@@ -164,7 +160,7 @@ expression_error_t technical_dump(expression_t      *expression,
 
     char dot_filename[256] = {};
     sprintf(dot_filename,
-            "logs/dot/%s%04llx.dot",
+            "logs/dot/%s%04lx.dot",
             expression->dump_info.technical_filename,
             expression->dump_info.technical_number);
 
@@ -182,7 +178,7 @@ expression_error_t technical_dump(expression_t      *expression,
     fclose(dot_file);
     char command[256] = {};
     sprintf(command,
-            "dot %s -Tsvg -o logs/img/%s%04llx.svg",
+            "dot %s -Tsvg -o logs/img/%s%04lx.svg",
             dot_filename,
             expression->dump_info.technical_filename,
             expression->dump_info.technical_number);
@@ -201,7 +197,7 @@ expression_error_t technical_dump(expression_t      *expression,
     fprintf(expression->dump_info.technical_file,
             "</h2>\n"
             "<h1>------------------------------------------------------------------</h1>\n"
-            "<img src = \"img/%s%04llx.svg\">\n",
+            "<img src = \"img/%s%04lx.svg\">\n",
             expression->dump_info.technical_filename,
             expression->dump_info.technical_number);
     expression->dump_info.technical_number++;
@@ -223,7 +219,7 @@ expression_error_t technical_dump_write_subtree(expression_t      *expression,
 
     fprintf(dot_file,
             "node%p[fillcolor = \"%s\", "
-            "rank = %llu, "
+            "rank = %lu, "
             "label = \"{%p | type = %s | value = %s | { <l> %s | <r> %s }}\"];\n",
             node,
             node_color(node, current_node),
@@ -366,8 +362,8 @@ expression_error_t latex_log_ctor(latex_log_info_t *log_info,
             "\\documentclass[12pt]{article}\n\n"
             "\\usepackage[utf8]{inputenc}\n"
             "\\usepackage[english, russian]{babel}\n\n"
-            "\\title{Методическое пособие по ёбани}\n"
-            "\\author{by хуйня corporated}\n"
+            "\\title{Методическое пособие по математическому анализу}\n"
+            "\\author{by 211 corporated}\n"
             "\\begin{document}\n"
             "\\maketitle\n");
     return EXPRESSION_SUCCESS;
@@ -385,7 +381,7 @@ expression_error_t latex_log_write(latex_log_info_t  *log_info,
         va_list args;
         va_start(args, node);
         size_t value = va_arg(args, size_t);
-        fprintf(log_info->file, "%llu. ", value);
+        fprintf(log_info->file, "%lu. ", value);
         va_end(args);
     }
     if(action == TAILOR_EVALUATE) {
@@ -393,12 +389,12 @@ expression_error_t latex_log_write(latex_log_info_t  *log_info,
         va_start(args, node);
         size_t derivative_number = va_arg(args, size_t);
         double value = va_arg(args, double);
-        fprintf(log_info->file, "\\[f^{(%llu)}=%lg\\]", derivative_number, value);
+        fprintf(log_info->file, "\\[f^{(%lu)}=%lg\\]", derivative_number, value);
         va_end(args);
         return EXPRESSION_SUCCESS;
     }
     if(action == WRITING_RESULT) {
-        fprintf(log_info->file, "Ебались мы с вот такой хернёй:\n");
+        fprintf(log_info->file, "Изначальное выражение:\n");
         _RETURN_IF_ERROR(latex_log_check_substitutions(log_info, log_info->expression->root));
         fprintf(log_info->file, "\\[ y = ");
         _RETURN_IF_ERROR(latex_write_subtree(log_info, log_info->expression->root));
@@ -639,7 +635,7 @@ expression_error_t latex_log_check_substitutions(latex_log_info_t  *log_info,
     }
 
     node->is_substitution = true;
-    sprintf(node->substitution_name, "I_{%llu}", log_info->substitutions_number++);
+    sprintf(node->substitution_name, "I_{%lu}", log_info->substitutions_number++);
     return EXPRESSION_SUCCESS;
 }
 
